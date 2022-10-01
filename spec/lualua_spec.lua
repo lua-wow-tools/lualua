@@ -1,1 +1,5 @@
-describe("lualua", function() end)
+describe('lualua', function()
+  it('loads', function()
+    assert.True(require('lualua'))
+  end)
+end)

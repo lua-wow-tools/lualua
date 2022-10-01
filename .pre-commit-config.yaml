@@ -17,6 +17,11 @@ repos:
     entry: luacheck
     language: system
     types: [lua]
+  - id: build
+    name: build
+    entry: luarocks build --no-install
+    language: system
+    pass_filenames: false
   - id: busted
     name: busted
     entry: busted
