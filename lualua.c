@@ -137,6 +137,26 @@ static struct luaL_Reg lualua_index[] = {
   {NULL, NULL},
 };
 
+typedef struct {
+  const char *name;
+  int value;
+} lualua_Constant;
+
+static lualua_Constant lualua_constants[] = {
+  {"GLOBALSINDEX", LUA_GLOBALSINDEX},
+  {"REGISTRYINDEX", LUA_REGISTRYINDEX},
+  {"TBOOLEAN", LUA_TBOOLEAN},
+  {"TLIGHTUSERDATA", LUA_TLIGHTUSERDATA},
+  {"TFUNCTION", LUA_TFUNCTION},
+  {"TNIL", LUA_TNIL},
+  {"TNUMBER", LUA_TNUMBER},
+  {"TSTRING", LUA_TSTRING},
+  {"TTABLE", LUA_TTABLE},
+  {"TTHREAD", LUA_TTHREAD},
+  {"TUSERDATA", LUA_TUSERDATA},
+  {NULL, 0},
+};
+
 int luaopen_lualua(lua_State *L) {
   if (luaL_newmetatable(L, lualua_state_metatable)) {
     lua_pushstring(L, "__index");
@@ -153,5 +173,10 @@ int luaopen_lualua(lua_State *L) {
   lua_pop(L, 1);
   lua_newtable(L);
   luaL_register(L, NULL, lualua_index);
+  for (const lualua_Constant *c = lualua_constants; c->name != NULL; ++c) {
+    lua_pushstring(L, c->name);
+    lua_pushinteger(L, c->value);
+    lua_settable(L, -3);
+  }
   return 1;
 }
