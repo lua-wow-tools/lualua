@@ -21,7 +21,74 @@ static int lualua_state_gc(lua_State *L) {
   return 0;
 }
 
+static int lualua_gettop(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  lua_pushnumber(L, lua_gettop(S));
+  return 1;
+}
+
+static int lualua_isnumber(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isnumber(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_isstring(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isstring(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_pushnumber(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  lua_Number n = luaL_checknumber(L, 2);
+  lua_pushnumber(S, n);
+  return 0;
+}
+
+static int lualua_pushstring(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  const char *s = luaL_checkstring(L, 2);
+  lua_pushstring(S, s);
+  return 0;
+}
+
+static int lualua_settop(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  lua_settop(S, index);
+  return 0;
+}
+
+static int lualua_tonumber(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  lua_Number number = lua_tonumber(S, index);
+  lua_pushnumber(L, number);
+  return 1;
+}
+
+static int lualua_tostring(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  const char *s = lua_tostring(S, index);
+  lua_pushstring(L, s);
+  return 1;
+}
+
 static struct luaL_Reg lualua_state_index[] = {
+  {"gettop", lualua_gettop},
+  {"isnumber", lualua_isnumber},
+  {"isstring", lualua_isstring},
+  {"pushnumber", lualua_pushnumber},
+  {"pushstring", lualua_pushstring},
+  {"settop", lualua_settop},
+  {"tonumber", lualua_tonumber},
+  {"tostring", lualua_tostring},
   {NULL, NULL},
 };
 
