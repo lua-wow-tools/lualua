@@ -59,4 +59,11 @@ describe('lualua', function()
     assert.same('number', type(lib.TNIL))
     assert.same('nil', type(lib.nonsense))
   end)
+
+  it('does not panic on error', function()
+    local function fn()
+      lib.newstate():gettable(42)
+    end
+    assert.has.errors(fn, 'attempt to index non-table value')
+  end)
 end)

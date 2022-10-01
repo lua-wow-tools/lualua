@@ -24,6 +24,10 @@ static int lualua_state_gc(lua_State *L) {
 static int lualua_gettable(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
+  if (lua_type(S, index) != LUA_TTABLE) {
+    lua_pushstring(L, "attempt to index non-table value");
+    lua_error(L);
+  }
   lua_gettable(S, index);
   return 0;
 }
