@@ -66,4 +66,11 @@ describe('lualua', function()
     end
     assert.has.errors(fn, 'attempt to index non-table value')
   end)
+
+  it('can load strings', function()
+    local state = lib.newstate()
+    assert.same(0, nr(1, state:loadstring('return 42')))
+    nr(0, state:call(0, 1))
+    assert.same(42, state:tonumber(-1))
+  end)
 end)
