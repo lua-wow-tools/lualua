@@ -168,6 +168,7 @@ typedef struct {
 
 static lualua_Constant lualua_constants[] = {
   {"GLOBALSINDEX", LUA_GLOBALSINDEX},
+  {"MULTRET", LUA_MULTRET},
   {"REGISTRYINDEX", LUA_REGISTRYINDEX},
   {"TBOOLEAN", LUA_TBOOLEAN},
   {"TLIGHTUSERDATA", LUA_TLIGHTUSERDATA},
