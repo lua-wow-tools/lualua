@@ -25,8 +25,9 @@ static int lualua_call(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
-  lua_call(S, nargs, nresults);
-  return 0;
+  int value = lua_pcall(S, nargs, nresults, 0);
+  lua_pushinteger(L, value);
+  return 1;
 }
 
 static int lualua_gettable(lua_State *L) {
@@ -180,6 +181,9 @@ typedef struct {
 } lualua_Constant;
 
 static lualua_Constant lualua_constants[] = {
+  {"ERRERR", LUA_ERRERR},
+  {"ERRMEM", LUA_ERRMEM},
+  {"ERRRUN", LUA_ERRRUN},
   {"GLOBALSINDEX", LUA_GLOBALSINDEX},
   {"MULTRET", LUA_MULTRET},
   {"REGISTRYINDEX", LUA_REGISTRYINDEX},

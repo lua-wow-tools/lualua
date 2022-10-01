@@ -2,7 +2,10 @@ describe('lualua', function()
   local lib = require('lualua')
 
   local function nr(k, ...)
-    assert.same(k, select('#', ...))
+    local n = select('#', ...)
+    if k ~= n then
+      error(('wrong number of return values: expected %d, got %d'):format(k, n), 2)
+    end
     return ...
   end
 
@@ -72,7 +75,7 @@ describe('lualua', function()
     assert.same(0, nr(1, state:loadstring('local n = ...; return n + 5, "foo"')))
     assert.same(1, state:gettop())
     state:pushnumber(42)
-    nr(0, state:call(1, lib.MULTRET))
+    assert.same(0, nr(1, state:call(1, lib.MULTRET)))
     assert.same(2, state:gettop())
     assert.same(47, state:tonumber(-2))
     assert.same('foo', state:tostring(-1))
@@ -85,5 +88,10 @@ describe('lualua', function()
     state:call(1, 1)
     state:call(0, 1)
     assert.same(42, state:tonumber(-1))
+  end)
+
+  it('does not panic on call', function()
+    local state = lib.newstate()
+    assert.same(lib.ERRRUN, state:call(0, 0))
   end)
 end)
