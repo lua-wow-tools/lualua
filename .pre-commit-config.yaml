@@ -1,0 +1,28 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.0.1
+  hooks:
+  - id: check-json
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+- repo: https://github.com/JohnnyMorganz/StyLua
+  rev: v0.12.4
+  hooks:
+  - id: stylua-system
+- repo: local
+  hooks:
+  - id: luacheck
+    name: luacheck
+    entry: luacheck
+    language: system
+    types: [lua]
+  - id: busted
+    name: busted
+    entry: busted
+    language: system
+    pass_filenames: false
+- repo: meta
+  hooks:
+  - id: check-hooks-apply
+  - id: check-useless-excludes
