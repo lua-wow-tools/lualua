@@ -85,6 +85,18 @@ static int lualua_pop(lua_State *L) {
   return 0;
 }
 
+static int lualua_pushcclosure(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  lua_CFunction fn = lua_tocfunction(L, 2);
+  if (fn == NULL) {
+    lua_pushfstring(L, "expected c function, got %s", lua_typename(L, lua_type(L, 2)));
+    lua_error(L);
+  }
+  int n = luaL_checkint(L, 3);
+  lua_pushcclosure(S, fn, n);
+  return 0;
+}
+
 static int lualua_pushnumber(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   lua_Number n = luaL_checknumber(L, 2);
@@ -146,6 +158,7 @@ static struct luaL_Reg lualua_state_index[] = {
   {"loadstring", lualua_loadstring},
   {"newtable", lualua_newtable},
   {"pop", lualua_pop},
+  {"pushcclosure", lualua_pushcclosure},
   {"pushnumber", lualua_pushnumber},
   {"pushstring", lualua_pushstring},
   {"settable", lualua_settable},
