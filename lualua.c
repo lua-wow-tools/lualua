@@ -1,7 +1,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-static const char lualua_state_metatable[] = "lualua";
+static const char lualua_state_metatable[] = "lualua state";
 
 static int lualua_newstate(lua_State *L) {
   lua_State **p = lua_newuserdata(L, sizeof(*p));
