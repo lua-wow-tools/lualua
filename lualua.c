@@ -47,6 +47,14 @@ static int lualua_gettop(lua_State *L) {
   return 1;
 }
 
+static int lualua_isnil(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isnil(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
 static int lualua_isnumber(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
@@ -154,6 +162,7 @@ static struct luaL_Reg lualua_state_index[] = {
   {"call", lualua_call},
   {"gettable", lualua_gettable},
   {"gettop", lualua_gettop},
+  {"isnil", lualua_isnil},
   {"isnumber", lualua_isnumber},
   {"isstring", lualua_isstring},
   {"loadstring", lualua_loadstring},
