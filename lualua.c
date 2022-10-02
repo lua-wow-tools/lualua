@@ -214,6 +214,13 @@ static int lualua_pushstring(lua_State *L) {
   return 0;
 }
 
+static int lualua_pushvalue(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  lua_pushvalue(S, index);
+  return 0;
+}
+
 static int lualua_settable(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
@@ -285,6 +292,7 @@ static struct luaL_Reg lualua_state_index[] = {
   {"pushnil", lualua_pushnil},
   {"pushnumber", lualua_pushnumber},
   {"pushstring", lualua_pushstring},
+  {"pushvalue", lualua_pushvalue},
   {"settable", lualua_settable},
   {"settop", lualua_settop},
   {"toboolean", lualua_toboolean},
