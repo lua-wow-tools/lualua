@@ -272,7 +272,7 @@ static int lualua_typename(lua_State *L) {
   return 1;
 }
 
-static struct luaL_Reg lualua_state_index[] = {
+static const struct luaL_Reg lualua_state_index[] = {
     {"call", lualua_call},
     {"equal", lualua_equal},
     {"gettable", lualua_gettable},
@@ -307,7 +307,7 @@ static struct luaL_Reg lualua_state_index[] = {
     {NULL, NULL},
 };
 
-static struct luaL_Reg lualua_index[] = {
+static const struct luaL_Reg lualua_index[] = {
     {"newstate", lualua_newstate},
     {NULL, NULL},
 };
@@ -317,7 +317,7 @@ typedef struct {
   int value;
 } lualua_Constant;
 
-static lualua_Constant lualua_constants[] = {
+static const lualua_Constant lualua_constants[] = {
     {"ERRERR", LUA_ERRERR},       {"ERRMEM", LUA_ERRMEM},
     {"ERRRUN", LUA_ERRRUN},       {"GLOBALSINDEX", LUA_GLOBALSINDEX},
     {"MULTRET", LUA_MULTRET},     {"REGISTRYINDEX", LUA_REGISTRYINDEX},
