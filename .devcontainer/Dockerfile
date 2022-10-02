@@ -6,6 +6,6 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         pre-commit python3-dev \
     && python3 -m pip install git+https://github.com/luarocks/hererocks \
-    && hererocks -l 5.1 -r 3.8.0 /usr/local \
+    && hererocks -l 5.1 -r 3.8.0 --cflags=-DLUA_USE_APICHECK /usr/local \
     && echo busted luacheck | xargs -n1 luarocks install
 COPY --from=stylua-builder /opt/stylua /usr/local
