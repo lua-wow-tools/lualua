@@ -24,7 +24,7 @@ repos:
     pass_filenames: false
   - id: busted
     name: busted
-    entry: busted
+    entry: bash -c "busted || false"
     language: system
     pass_filenames: false
 - repo: meta

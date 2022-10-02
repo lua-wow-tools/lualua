@@ -62,8 +62,8 @@ describe('lualua', function()
       end)
       it('tracks settop', function()
         local s = lib.newstate()
-        s:settop(42)
-        assert.same(42, nr(1, s:gettop()))
+        s:settop(15)
+        assert.same(15, nr(1, s:gettop()))
       end)
     end)
 
@@ -402,7 +402,7 @@ describe('lualua', function()
 
   it('does not panic on error', function()
     local function fn()
-      lib.newstate():gettable(42)
+      lib.newstate():gettable(15)
     end
     assert.has.errors(fn, 'attempt to index non-table value')
   end)
@@ -429,6 +429,7 @@ describe('lualua', function()
 
   it('does not panic on call', function()
     local s = lib.newstate()
+    s:pushnumber(42) -- TODO remove when safer with index checking
     assert.same(lib.ERRRUN, s:call(0, 0))
   end)
 end)
