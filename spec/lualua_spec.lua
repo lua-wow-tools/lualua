@@ -429,7 +429,9 @@ describe('lualua', function()
 
   it('does not panic on call', function()
     local s = lib.newstate()
-    s:pushnumber(42) -- TODO remove when safer with index checking
-    assert.same(lib.ERRRUN, s:call(0, 0))
+    local function fn()
+      s:call(0, 0)
+    end
+    assert.errors(fn, 'lualua call: insufficient elements on stack')
   end)
 end)

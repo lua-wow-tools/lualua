@@ -25,6 +25,10 @@ static int lualua_call(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
+  if (lua_gettop(S) < nargs + 1) {
+    lua_pushstring(L, "lualua call: insufficient elements on stack");
+    lua_error(L);
+  }
   int value = lua_pcall(S, nargs, nresults, 0);
   lua_pushinteger(L, value);
   return 1;
