@@ -10,6 +10,13 @@ repos:
   rev: v0.12.4
   hooks:
   - id: stylua-system
+- repo: https://github.com/pocc/pre-commit-hooks
+  rev: v1.3.5
+  hooks:
+  - id: clang-format
+    args:
+    - --style=Google
+    - -i
 - repo: local
   hooks:
   - id: luacheck

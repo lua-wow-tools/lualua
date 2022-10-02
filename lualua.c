@@ -1,5 +1,5 @@
-#include <lua.h>
 #include <lauxlib.h>
+#include <lua.h>
 
 static const char lualua_state_metatable[] = "lualua state";
 
@@ -190,7 +190,8 @@ static int lualua_pushcclosure(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   lua_CFunction fn = lua_tocfunction(L, 2);
   if (fn == NULL) {
-    lua_pushfstring(L, "expected c function, got %s", lua_typename(L, lua_type(L, 2)));
+    lua_pushfstring(L, "expected c function, got %s",
+                    lua_typename(L, lua_type(L, 2)));
     lua_error(L);
   }
   int n = luaL_checkint(L, 3);
@@ -272,43 +273,43 @@ static int lualua_typename(lua_State *L) {
 }
 
 static struct luaL_Reg lualua_state_index[] = {
-  {"call", lualua_call},
-  {"equal", lualua_equal},
-  {"gettable", lualua_gettable},
-  {"gettop", lualua_gettop},
-  {"isboolean", lualua_isboolean},
-  {"iscfunction", lualua_iscfunction},
-  {"isfunction", lualua_isfunction},
-  {"islightuserdata", lualua_islightuserdata},
-  {"isnil", lualua_isnil},
-  {"isnone", lualua_isnone},
-  {"isnoneornil", lualua_isnoneornil},
-  {"isnumber", lualua_isnumber},
-  {"isstring", lualua_isstring},
-  {"istable", lualua_istable},
-  {"isthread", lualua_isthread},
-  {"isuserdata", lualua_isuserdata},
-  {"loadstring", lualua_loadstring},
-  {"newtable", lualua_newtable},
-  {"pop", lualua_pop},
-  {"pushboolean", lualua_pushboolean},
-  {"pushcclosure", lualua_pushcclosure},
-  {"pushnil", lualua_pushnil},
-  {"pushnumber", lualua_pushnumber},
-  {"pushstring", lualua_pushstring},
-  {"pushvalue", lualua_pushvalue},
-  {"settable", lualua_settable},
-  {"settop", lualua_settop},
-  {"toboolean", lualua_toboolean},
-  {"tonumber", lualua_tonumber},
-  {"tostring", lualua_tostring},
-  {"typename", lualua_typename},
-  {NULL, NULL},
+    {"call", lualua_call},
+    {"equal", lualua_equal},
+    {"gettable", lualua_gettable},
+    {"gettop", lualua_gettop},
+    {"isboolean", lualua_isboolean},
+    {"iscfunction", lualua_iscfunction},
+    {"isfunction", lualua_isfunction},
+    {"islightuserdata", lualua_islightuserdata},
+    {"isnil", lualua_isnil},
+    {"isnone", lualua_isnone},
+    {"isnoneornil", lualua_isnoneornil},
+    {"isnumber", lualua_isnumber},
+    {"isstring", lualua_isstring},
+    {"istable", lualua_istable},
+    {"isthread", lualua_isthread},
+    {"isuserdata", lualua_isuserdata},
+    {"loadstring", lualua_loadstring},
+    {"newtable", lualua_newtable},
+    {"pop", lualua_pop},
+    {"pushboolean", lualua_pushboolean},
+    {"pushcclosure", lualua_pushcclosure},
+    {"pushnil", lualua_pushnil},
+    {"pushnumber", lualua_pushnumber},
+    {"pushstring", lualua_pushstring},
+    {"pushvalue", lualua_pushvalue},
+    {"settable", lualua_settable},
+    {"settop", lualua_settop},
+    {"toboolean", lualua_toboolean},
+    {"tonumber", lualua_tonumber},
+    {"tostring", lualua_tostring},
+    {"typename", lualua_typename},
+    {NULL, NULL},
 };
 
 static struct luaL_Reg lualua_index[] = {
-  {"newstate", lualua_newstate},
-  {NULL, NULL},
+    {"newstate", lualua_newstate},
+    {NULL, NULL},
 };
 
 typedef struct {
@@ -317,22 +318,14 @@ typedef struct {
 } lualua_Constant;
 
 static lualua_Constant lualua_constants[] = {
-  {"ERRERR", LUA_ERRERR},
-  {"ERRMEM", LUA_ERRMEM},
-  {"ERRRUN", LUA_ERRRUN},
-  {"GLOBALSINDEX", LUA_GLOBALSINDEX},
-  {"MULTRET", LUA_MULTRET},
-  {"REGISTRYINDEX", LUA_REGISTRYINDEX},
-  {"TBOOLEAN", LUA_TBOOLEAN},
-  {"TLIGHTUSERDATA", LUA_TLIGHTUSERDATA},
-  {"TFUNCTION", LUA_TFUNCTION},
-  {"TNIL", LUA_TNIL},
-  {"TNUMBER", LUA_TNUMBER},
-  {"TSTRING", LUA_TSTRING},
-  {"TTABLE", LUA_TTABLE},
-  {"TTHREAD", LUA_TTHREAD},
-  {"TUSERDATA", LUA_TUSERDATA},
-  {NULL, 0},
+    {"ERRERR", LUA_ERRERR},       {"ERRMEM", LUA_ERRMEM},
+    {"ERRRUN", LUA_ERRRUN},       {"GLOBALSINDEX", LUA_GLOBALSINDEX},
+    {"MULTRET", LUA_MULTRET},     {"REGISTRYINDEX", LUA_REGISTRYINDEX},
+    {"TBOOLEAN", LUA_TBOOLEAN},   {"TLIGHTUSERDATA", LUA_TLIGHTUSERDATA},
+    {"TFUNCTION", LUA_TFUNCTION}, {"TNIL", LUA_TNIL},
+    {"TNUMBER", LUA_TNUMBER},     {"TSTRING", LUA_TSTRING},
+    {"TTABLE", LUA_TTABLE},       {"TTHREAD", LUA_TTHREAD},
+    {"TUSERDATA", LUA_TUSERDATA}, {NULL, 0},
 };
 
 int luaopen_lualua(lua_State *L) {
