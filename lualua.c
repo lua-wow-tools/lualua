@@ -47,10 +47,58 @@ static int lualua_gettop(lua_State *L) {
   return 1;
 }
 
+static int lualua_isboolean(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isboolean(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_iscfunction(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_iscfunction(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_isfunction(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isfunction(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_islightuserdata(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_islightuserdata(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
 static int lualua_isnil(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
   int result = lua_isnil(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_isnone(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isnone(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_isnoneornil(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isnoneornil(S, index);
   lua_pushboolean(L, result);
   return 1;
 }
@@ -67,6 +115,30 @@ static int lualua_isstring(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
   int result = lua_isstring(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_istable(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_istable(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_isthread(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isthread(S, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_isuserdata(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int result = lua_isuserdata(S, index);
   lua_pushboolean(L, result);
   return 1;
 }
@@ -168,9 +240,18 @@ static struct luaL_Reg lualua_state_index[] = {
   {"call", lualua_call},
   {"gettable", lualua_gettable},
   {"gettop", lualua_gettop},
+  {"isboolean", lualua_isboolean},
+  {"iscfunction", lualua_iscfunction},
+  {"isfunction", lualua_isfunction},
+  {"islightuserdata", lualua_islightuserdata},
   {"isnil", lualua_isnil},
+  {"isnone", lualua_isnone},
+  {"isnoneornil", lualua_isnoneornil},
   {"isnumber", lualua_isnumber},
   {"isstring", lualua_isstring},
+  {"istable", lualua_istable},
+  {"isthread", lualua_isthread},
+  {"isuserdata", lualua_isuserdata},
   {"loadstring", lualua_loadstring},
   {"newtable", lualua_newtable},
   {"pop", lualua_pop},
