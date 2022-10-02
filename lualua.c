@@ -30,6 +30,15 @@ static int lualua_call(lua_State *L) {
   return 1;
 }
 
+static int lualua_equal(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index1 = luaL_checkint(L, 2);
+  int index2 = luaL_checkint(L, 3);
+  int value = lua_equal(S, index1, index2);
+  lua_pushboolean(L, value);
+  return 1;
+}
+
 static int lualua_gettable(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
@@ -253,6 +262,7 @@ static int lualua_typename(lua_State *L) {
 
 static struct luaL_Reg lualua_state_index[] = {
   {"call", lualua_call},
+  {"equal", lualua_equal},
   {"gettable", lualua_gettable},
   {"gettop", lualua_gettop},
   {"isboolean", lualua_isboolean},
