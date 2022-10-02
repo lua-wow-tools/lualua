@@ -106,6 +106,12 @@ static int lualua_pushcclosure(lua_State *L) {
   return 0;
 }
 
+static int lualua_pushnil(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  lua_pushnil(S);
+  return 0;
+}
+
 static int lualua_pushnumber(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   lua_Number n = luaL_checknumber(L, 2);
@@ -169,6 +175,7 @@ static struct luaL_Reg lualua_state_index[] = {
   {"newtable", lualua_newtable},
   {"pop", lualua_pop},
   {"pushcclosure", lualua_pushcclosure},
+  {"pushnil", lualua_pushnil},
   {"pushnumber", lualua_pushnumber},
   {"pushstring", lualua_pushstring},
   {"settable", lualua_settable},
