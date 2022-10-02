@@ -34,6 +34,14 @@ static int lualua_call(lua_State *L) {
   return 1;
 }
 
+static int lualua_checkstack(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int value = lua_checkstack(S, index);
+  lua_pushboolean(L, value);
+  return 1;
+}
+
 static int lualua_equal(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index1 = luaL_checkint(L, 2);
@@ -274,6 +282,7 @@ static int lualua_typename(lua_State *L) {
 
 static const struct luaL_Reg lualua_state_index[] = {
     {"call", lualua_call},
+    {"checkstack", lualua_checkstack},
     {"equal", lualua_equal},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
@@ -318,14 +327,23 @@ typedef struct {
 } lualua_Constant;
 
 static const lualua_Constant lualua_constants[] = {
-    {"ERRERR", LUA_ERRERR},       {"ERRMEM", LUA_ERRMEM},
-    {"ERRRUN", LUA_ERRRUN},       {"GLOBALSINDEX", LUA_GLOBALSINDEX},
-    {"MULTRET", LUA_MULTRET},     {"REGISTRYINDEX", LUA_REGISTRYINDEX},
-    {"TBOOLEAN", LUA_TBOOLEAN},   {"TLIGHTUSERDATA", LUA_TLIGHTUSERDATA},
-    {"TFUNCTION", LUA_TFUNCTION}, {"TNIL", LUA_TNIL},
-    {"TNUMBER", LUA_TNUMBER},     {"TSTRING", LUA_TSTRING},
-    {"TTABLE", LUA_TTABLE},       {"TTHREAD", LUA_TTHREAD},
-    {"TUSERDATA", LUA_TUSERDATA}, {NULL, 0},
+    {"ERRERR", LUA_ERRERR},
+    {"ERRMEM", LUA_ERRMEM},
+    {"ERRRUN", LUA_ERRRUN},
+    {"GLOBALSINDEX", LUA_GLOBALSINDEX},
+    {"MAXCSTACK", LUAI_MAXCSTACK},
+    {"MULTRET", LUA_MULTRET},
+    {"REGISTRYINDEX", LUA_REGISTRYINDEX},
+    {"TBOOLEAN", LUA_TBOOLEAN},
+    {"TLIGHTUSERDATA", LUA_TLIGHTUSERDATA},
+    {"TFUNCTION", LUA_TFUNCTION},
+    {"TNIL", LUA_TNIL},
+    {"TNUMBER", LUA_TNUMBER},
+    {"TSTRING", LUA_TSTRING},
+    {"TTABLE", LUA_TTABLE},
+    {"TTHREAD", LUA_TTHREAD},
+    {"TUSERDATA", LUA_TUSERDATA},
+    {NULL, 0},
 };
 
 int luaopen_lualua(lua_State *L) {
