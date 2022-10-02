@@ -26,8 +26,7 @@ static int lualua_call(lua_State *L) {
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
   if (lua_gettop(S) < nargs + 1) {
-    lua_pushstring(L, "lualua call: insufficient elements on stack");
-    lua_error(L);
+    luaL_error(L, "lualua call: insufficient elements on stack");
   }
   int value = lua_pcall(S, nargs, nresults, 0);
   lua_pushinteger(L, value);
@@ -55,8 +54,7 @@ static int lualua_gettable(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
   if (lua_type(S, index) != LUA_TTABLE) {
-    lua_pushstring(L, "attempt to index non-table value");
-    lua_error(L);
+    luaL_error(L, "attempt to index non-table value");
   }
   lua_gettable(S, index);
   return 0;
@@ -198,9 +196,8 @@ static int lualua_pushcclosure(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   lua_CFunction fn = lua_tocfunction(L, 2);
   if (fn == NULL) {
-    lua_pushfstring(L, "expected c function, got %s",
-                    lua_typename(L, lua_type(L, 2)));
-    lua_error(L);
+    luaL_error(L, "expected c function, got %s",
+               lua_typename(L, lua_type(L, 2)));
   }
   int n = luaL_checkint(L, 3);
   lua_pushcclosure(S, fn, n);
@@ -246,11 +243,9 @@ static int lualua_settop(lua_State *L) {
   int index = luaL_checkint(L, 2);
   int top = lua_gettop(S);
   if (index > 0 && !lua_checkstack(S, index - top)) {
-    lua_pushstring(L, "lualua settop: cannot extend stack");
-    lua_error(L);
+    luaL_error(L, "lualua settop: cannot extend stack");
   } else if (index < 0 && -1 - index > top) {
-    lua_pushstring(L, "lualua settop: cannot pop stack past the end");
-    lua_error(L);
+    luaL_error(L, "lualua settop: cannot pop stack past the end");
   }
   lua_settop(S, index);
   return 0;
