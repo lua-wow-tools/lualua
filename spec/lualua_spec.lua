@@ -9,6 +9,16 @@ describe('lualua', function()
     return ...
   end
 
+  it('is a table with newstate and constants', function()
+    assert.same('table', type(lib))
+    assert.Nil(getmetatable(lib))
+    assert.Not.Nil(next(lib))
+    for k, v in pairs(lib) do
+      assert.same('string', type(k))
+      assert.same(k == 'newstate' and 'function' or 'number', type(v))
+    end
+  end)
+
   it('creates an empty state', function()
     local s = lib.newstate()
     assert.same('userdata', type(s))
