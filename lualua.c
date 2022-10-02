@@ -1,6 +1,5 @@
 #include <lauxlib.h>
 #include <lua.h>
-#include <stdlib.h>
 
 static const char lualua_state_metatable[] = "lualua state";
 
@@ -245,8 +244,12 @@ static int lualua_settable(lua_State *L) {
 static int lualua_settop(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
-  if (!lua_checkstack(S, abs(index) - lua_gettop(S))) {
+  int top = lua_gettop(S);
+  if (index > 0 && !lua_checkstack(S, index - top)) {
     lua_pushstring(L, "lualua settop: cannot extend stack");
+    lua_error(L);
+  } else if (index < 0 && -1 - index > top) {
+    lua_pushstring(L, "lualua settop: cannot pop stack past the end");
     lua_error(L);
   }
   lua_settop(S, index);
