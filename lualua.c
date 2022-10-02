@@ -21,6 +21,12 @@ static int lualua_state_gc(lua_State *L) {
   return 0;
 }
 
+static void lualua_checkstatestack(lua_State *L, lua_State *S, int index) {
+  if (!lua_checkstack(S, index)) {
+    luaL_error(L, "stack overflow");
+  }
+}
+
 static int lualua_call(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
@@ -188,6 +194,7 @@ static int lualua_pop(lua_State *L) {
 static int lualua_pushboolean(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int b = lua_toboolean(L, 2);
+  lualua_checkstatestack(L, S, 1);
   lua_pushboolean(S, b);
   return 0;
 }
@@ -200,15 +207,14 @@ static int lualua_pushcclosure(lua_State *L) {
                lua_typename(L, lua_type(L, 2)));
   }
   int n = luaL_checkint(L, 3);
+  lualua_checkstatestack(L, S, 1);
   lua_pushcclosure(S, fn, n);
   return 0;
 }
 
 static int lualua_pushnil(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
-  if (!lua_checkstack(S, 1)) {
-    luaL_error(L, "lualua pushnil: cannot extend stack");
-  }
+  lualua_checkstatestack(L, S, 1);
   lua_pushnil(S);
   return 0;
 }
@@ -216,6 +222,7 @@ static int lualua_pushnil(lua_State *L) {
 static int lualua_pushnumber(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   lua_Number n = luaL_checknumber(L, 2);
+  lualua_checkstatestack(L, S, 1);
   lua_pushnumber(S, n);
   return 0;
 }
@@ -223,6 +230,7 @@ static int lualua_pushnumber(lua_State *L) {
 static int lualua_pushstring(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   const char *s = luaL_checkstring(L, 2);
+  lualua_checkstatestack(L, S, 1);
   lua_pushstring(S, s);
   return 0;
 }
@@ -230,6 +238,7 @@ static int lualua_pushstring(lua_State *L) {
 static int lualua_pushvalue(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
+  lualua_checkstatestack(L, S, 1);
   lua_pushvalue(S, index);
   return 0;
 }
