@@ -226,6 +226,15 @@ describe('lualua', function()
         assert.same(1, s:gettop())
         assert.same(true, s:isnil(1))
       end)
+      it('fails on full stack', function()
+        local s = lib.newstate()
+        for _ = 1, lib.MAXCSTACK do
+          nr(0, s:pushnil())
+        end
+        assert.False(pcall(function()
+          s:pushnil()
+        end))
+      end)
     end)
 
     describe('pushnumber', function()

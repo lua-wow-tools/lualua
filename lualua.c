@@ -206,6 +206,9 @@ static int lualua_pushcclosure(lua_State *L) {
 
 static int lualua_pushnil(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
+  if (!lua_checkstack(S, 1)) {
+    luaL_error(L, "lualua pushnil: cannot extend stack");
+  }
   lua_pushnil(S);
   return 0;
 }
