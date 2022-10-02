@@ -17,6 +17,11 @@ repos:
     entry: luacheck
     language: system
     types: [lua]
+  - id: luarocks-lint
+    name: luarocks lint
+    entry: luarocks lint
+    files: .*\.rockspec
+    language: system
   - id: build
     name: build
     entry: luarocks build --no-install
