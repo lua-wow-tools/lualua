@@ -157,6 +157,15 @@ describe('lualua', function()
         assert.same(true, s:istable(2))
         assert.same(false, s:equal(1, 2))
       end)
+      it('fails on full stack', function()
+        local s = lib.newstate()
+        for _ = 1, lib.MAXCSTACK do
+          nr(0, s:newtable())
+        end
+        assert.False(pcall(function()
+          s:newtable()
+        end))
+      end)
     end)
 
     describe('pop', function()

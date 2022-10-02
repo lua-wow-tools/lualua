@@ -180,6 +180,7 @@ static int lualua_loadstring(lua_State *L) {
 
 static int lualua_newtable(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
+  lualua_checkstatestack(L, S, 1);
   lua_newtable(S);
   return 0;
 }
