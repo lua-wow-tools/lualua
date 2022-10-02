@@ -1,5 +1,6 @@
 #include <lauxlib.h>
 #include <lua.h>
+#include <stdlib.h>
 
 static const char lualua_state_metatable[] = "lualua state";
 
@@ -244,6 +245,10 @@ static int lualua_settable(lua_State *L) {
 static int lualua_settop(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
+  if (!lua_checkstack(S, abs(index) - lua_gettop(S))) {
+    lua_pushstring(L, "lualua settop: cannot extend stack");
+    lua_error(L);
+  }
   lua_settop(S, index);
   return 0;
 }
@@ -327,23 +332,15 @@ typedef struct {
 } lualua_Constant;
 
 static const lualua_Constant lualua_constants[] = {
-    {"ERRERR", LUA_ERRERR},
-    {"ERRMEM", LUA_ERRMEM},
-    {"ERRRUN", LUA_ERRRUN},
-    {"GLOBALSINDEX", LUA_GLOBALSINDEX},
-    {"MAXCSTACK", LUAI_MAXCSTACK},
-    {"MULTRET", LUA_MULTRET},
-    {"REGISTRYINDEX", LUA_REGISTRYINDEX},
-    {"TBOOLEAN", LUA_TBOOLEAN},
-    {"TLIGHTUSERDATA", LUA_TLIGHTUSERDATA},
-    {"TFUNCTION", LUA_TFUNCTION},
-    {"TNIL", LUA_TNIL},
-    {"TNUMBER", LUA_TNUMBER},
-    {"TSTRING", LUA_TSTRING},
-    {"TTABLE", LUA_TTABLE},
-    {"TTHREAD", LUA_TTHREAD},
-    {"TUSERDATA", LUA_TUSERDATA},
-    {NULL, 0},
+    {"ERRERR", LUA_ERRERR},        {"ERRMEM", LUA_ERRMEM},
+    {"ERRRUN", LUA_ERRRUN},        {"GLOBALSINDEX", LUA_GLOBALSINDEX},
+    {"MAXCSTACK", LUAI_MAXCSTACK}, {"MINSTACK", LUA_MINSTACK},
+    {"MULTRET", LUA_MULTRET},      {"REGISTRYINDEX", LUA_REGISTRYINDEX},
+    {"TBOOLEAN", LUA_TBOOLEAN},    {"TLIGHTUSERDATA", LUA_TLIGHTUSERDATA},
+    {"TFUNCTION", LUA_TFUNCTION},  {"TNIL", LUA_TNIL},
+    {"TNUMBER", LUA_TNUMBER},      {"TSTRING", LUA_TSTRING},
+    {"TTABLE", LUA_TTABLE},        {"TTHREAD", LUA_TTHREAD},
+    {"TUSERDATA", LUA_TUSERDATA},  {NULL, 0},
 };
 
 int luaopen_lualua(lua_State *L) {
