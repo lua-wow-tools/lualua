@@ -166,6 +166,13 @@ static int lualua_pop(lua_State *L) {
   return 0;
 }
 
+static int lualua_pushboolean(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int b = lua_toboolean(L, 2);
+  lua_pushboolean(S, b);
+  return 0;
+}
+
 static int lualua_pushcclosure(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   lua_CFunction fn = lua_tocfunction(L, 2);
@@ -212,6 +219,14 @@ static int lualua_settop(lua_State *L) {
   return 0;
 }
 
+static int lualua_toboolean(lua_State *L) {
+  lua_State *S = lualua_checkstate(L, 1);
+  int index = luaL_checkint(L, 2);
+  int b = lua_toboolean(S, index);
+  lua_pushboolean(L, b);
+  return 1;
+}
+
 static int lualua_tonumber(lua_State *L) {
   lua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
@@ -255,12 +270,14 @@ static struct luaL_Reg lualua_state_index[] = {
   {"loadstring", lualua_loadstring},
   {"newtable", lualua_newtable},
   {"pop", lualua_pop},
+  {"pushboolean", lualua_pushboolean},
   {"pushcclosure", lualua_pushcclosure},
   {"pushnil", lualua_pushnil},
   {"pushnumber", lualua_pushnumber},
   {"pushstring", lualua_pushstring},
   {"settable", lualua_settable},
   {"settop", lualua_settop},
+  {"toboolean", lualua_toboolean},
   {"tonumber", lualua_tonumber},
   {"tostring", lualua_tostring},
   {"typename", lualua_typename},
