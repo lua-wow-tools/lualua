@@ -159,7 +159,7 @@ describe('lualua', function()
       end)
       it('fails on full stack', function()
         local s = lib.newstate()
-        for _ = 1, lib.MAXCSTACK do
+        for _ = 1, lib.MINSTACK do
           nr(0, s:newtable())
         end
         assert.False(pcall(function()
@@ -228,7 +228,7 @@ describe('lualua', function()
       end)
       it('fails on full stack', function()
         local s = lib.newstate()
-        for _ = 1, lib.MAXCSTACK do
+        for _ = 1, lib.MINSTACK do
           nr(0, s:pushboolean(true))
         end
         assert.False(pcall(function()
@@ -246,7 +246,7 @@ describe('lualua', function()
       end)
       it('fails on full stack', function()
         local s = lib.newstate()
-        for _ = 1, lib.MAXCSTACK do
+        for _ = 1, lib.MINSTACK do
           nr(0, s:pushnil())
         end
         assert.False(pcall(function()
@@ -280,7 +280,7 @@ describe('lualua', function()
       end)
       it('fails on full stack', function()
         local s = lib.newstate()
-        for _ = 1, lib.MAXCSTACK do
+        for _ = 1, lib.MINSTACK do
           nr(0, s:pushnumber(42))
         end
         assert.False(pcall(function()
@@ -308,7 +308,7 @@ describe('lualua', function()
       end)
       it('fails on full stack', function()
         local s = lib.newstate()
-        for _ = 1, lib.MAXCSTACK do
+        for _ = 1, lib.MINSTACK do
           nr(0, s:pushstring('foo'))
         end
         assert.False(pcall(function()
@@ -341,7 +341,7 @@ describe('lualua', function()
       it('fails on full stack', function()
         local s = lib.newstate()
         s:pushnil()
-        for _ = 2, lib.MAXCSTACK do
+        for _ = 2, lib.MINSTACK do
           nr(0, s:pushvalue(-1))
         end
         assert.False(pcall(function()
@@ -388,10 +388,10 @@ describe('lualua', function()
         assert.same(13, s:tonumber(-1))
         assert.same(12, s:tonumber(-2))
       end)
-      it('extends stack if way beyond min stack', function()
+      it('succeeds on 0', function()
         local s = lib.newstate()
-        nr(0, s:settop(lib.MINSTACK * 2))
-        assert.same(lib.MINSTACK * 2, s:gettop())
+        nr(0, s:settop(0))
+        assert.same(0, s:gettop())
       end)
       it('does not fail on -1 even on empty stack', function()
         local s = lib.newstate()
@@ -404,14 +404,17 @@ describe('lualua', function()
           s:settop(-2)
         end))
       end)
-      it('throws an error if asked to allocate too much', function()
+      it('succeeds up to end of allocation', function()
+        local s = lib.newstate()
+        nr(0, s:settop(lib.MINSTACK))
+        assert.same(lib.MINSTACK, s:gettop())
+      end)
+      it('fails past end of allocation', function()
         local s = lib.newstate()
         assert.False(pcall(function()
-          s:settop(lib.MAXCSTACK + 1)
+          s:settop(lib.MINSTACK + 1)
         end))
-        assert.False(pcall(function()
-          s:settop(-lib.MAXCSTACK - 1)
-        end))
+        assert.same(0, s:gettop())
       end)
     end)
 

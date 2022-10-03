@@ -1,297 +1,314 @@
 #include <lauxlib.h>
 #include <lua.h>
 
+typedef struct {
+  lua_State *state;
+  int stackmax;
+} lualua_State;
+
 static const char lualua_state_metatable[] = "lualua state";
 
 static int lualua_newstate(lua_State *L) {
-  lua_State **p = lua_newuserdata(L, sizeof(*p));
+  lualua_State *p = lua_newuserdata(L, sizeof(*p));
   luaL_getmetatable(L, lualua_state_metatable);
   lua_setmetatable(L, -2);
-  *p = luaL_newstate();
+  p->state = luaL_newstate();
+  p->stackmax = LUA_MINSTACK;
   return 1;
 }
 
-static lua_State *lualua_checkstate(lua_State *L, int index) {
-  return *(lua_State **)luaL_checkudata(L, index, lualua_state_metatable);
+static lualua_State *lualua_checkstate(lua_State *L, int index) {
+  return luaL_checkudata(L, index, lualua_state_metatable);
 }
 
-static int lualua_state_gc(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  lua_close(S);
-  return 0;
+static int lualua_isacceptableindex(lualua_State *S, int index) {
+  return index > 0 && index <= S->stackmax ||
+         index < 0 && -index <= lua_gettop(S->state);
 }
 
-static void lualua_checkstatestack(lua_State *L, lua_State *S, int index) {
-  if (!lua_checkstack(S, index)) {
+static int lualua_checkacceptableindex(lua_State *L, int index,
+                                       lualua_State *S) {
+  int k = luaL_checkint(L, index);
+  if (!lualua_isacceptableindex(S, k)) {
+    luaL_error(L, "invalid index");
+  }
+  return k;
+}
+
+static void lualua_checkspace(lua_State *L, lualua_State *S, int space) {
+  if (S->stackmax - lua_gettop(S->state) < space) {
     luaL_error(L, "stack overflow");
   }
 }
 
+static int lualua_state_gc(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  lua_close(S->state);
+  return 0;
+}
+
 static int lualua_call(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
-  if (lua_gettop(S) < nargs + 1) {
+  if (lua_gettop(S->state) < nargs + 1) {
     luaL_error(L, "lualua call: insufficient elements on stack");
   }
-  int value = lua_pcall(S, nargs, nresults, 0);
+  int value = lua_pcall(S->state, nargs, nresults, 0);
   lua_pushinteger(L, value);
   return 1;
 }
 
 static int lualua_checkstack(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
-  int value = lua_checkstack(S, index);
+  int value = lua_checkstack(S->state, index);
   lua_pushboolean(L, value);
   return 1;
 }
 
 static int lualua_equal(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index1 = luaL_checkint(L, 2);
-  int index2 = luaL_checkint(L, 3);
-  int value = lua_equal(S, index1, index2);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index1 = lualua_checkacceptableindex(L, 2, S);
+  int index2 = lualua_checkacceptableindex(L, 3, S);
+  int value = lua_equal(S->state, index1, index2);
   lua_pushboolean(L, value);
   return 1;
 }
 
 static int lualua_gettable(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  if (lua_type(S, index) != LUA_TTABLE) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
     luaL_error(L, "attempt to index non-table value");
   }
-  lua_gettable(S, index);
+  lua_gettable(S->state, index);
   return 0;
 }
 
 static int lualua_gettop(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  lua_pushnumber(L, lua_gettop(S));
+  lualua_State *S = lualua_checkstate(L, 1);
+  lua_pushnumber(L, lua_gettop(S->state));
   return 1;
 }
 
 static int lualua_isboolean(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isboolean(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isboolean(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_iscfunction(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_iscfunction(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_iscfunction(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_isfunction(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isfunction(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isfunction(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_islightuserdata(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_islightuserdata(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_islightuserdata(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_isnil(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isnil(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isnil(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_isnone(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isnone(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isnone(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_isnoneornil(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isnoneornil(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isnoneornil(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_isnumber(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isnumber(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isnumber(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_isstring(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isstring(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isstring(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_istable(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_istable(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_istable(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_isthread(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isthread(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isthread(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_isuserdata(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int result = lua_isuserdata(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int result = lua_isuserdata(S->state, index);
   lua_pushboolean(L, result);
   return 1;
 }
 
 static int lualua_loadstring(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   size_t sz;
   const char *buff = luaL_checklstring(L, 2, &sz);
   const char *chunkname = luaL_optstring(L, 3, buff);
-  int value = luaL_loadbuffer(S, buff, sz, chunkname);
+  int value = luaL_loadbuffer(S->state, buff, sz, chunkname);
   lua_pushinteger(L, value);
   return 1;
 }
 
 static int lualua_newtable(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  lualua_checkstatestack(L, S, 1);
-  lua_newtable(S);
+  lualua_State *S = lualua_checkstate(L, 1);
+  lualua_checkspace(L, S, 1);
+  lua_newtable(S->state);
   return 0;
 }
 
 static int lualua_pop(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   int n = luaL_checkint(L, 2);
-  lua_pop(S, n);
+  lua_pop(S->state, n);
   return 0;
 }
 
 static int lualua_pushboolean(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   int b = lua_toboolean(L, 2);
-  lualua_checkstatestack(L, S, 1);
-  lua_pushboolean(S, b);
+  lualua_checkspace(L, S, 1);
+  lua_pushboolean(S->state, b);
   return 0;
 }
 
 static int lualua_pushcclosure(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   lua_CFunction fn = lua_tocfunction(L, 2);
   if (fn == NULL) {
     luaL_error(L, "expected c function, got %s",
                lua_typename(L, lua_type(L, 2)));
   }
   int n = luaL_checkint(L, 3);
-  lualua_checkstatestack(L, S, 1);
-  lua_pushcclosure(S, fn, n);
+  lualua_checkspace(L, S, 1);
+  lua_pushcclosure(S->state, fn, n);
   return 0;
 }
 
 static int lualua_pushnil(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  lualua_checkstatestack(L, S, 1);
-  lua_pushnil(S);
+  lualua_State *S = lualua_checkstate(L, 1);
+  lualua_checkspace(L, S, 1);
+  lua_pushnil(S->state);
   return 0;
 }
 
 static int lualua_pushnumber(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   lua_Number n = luaL_checknumber(L, 2);
-  lualua_checkstatestack(L, S, 1);
-  lua_pushnumber(S, n);
+  lualua_checkspace(L, S, 1);
+  lua_pushnumber(S->state, n);
   return 0;
 }
 
 static int lualua_pushstring(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   const char *s = luaL_checkstring(L, 2);
-  lualua_checkstatestack(L, S, 1);
-  lua_pushstring(S, s);
+  lualua_checkspace(L, S, 1);
+  lua_pushstring(S->state, s);
   return 0;
 }
 
 static int lualua_pushvalue(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  lualua_checkstatestack(L, S, 1);
-  lua_pushvalue(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  lualua_checkspace(L, S, 1);
+  lua_pushvalue(S->state, index);
   return 0;
 }
 
 static int lualua_settable(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  lua_settable(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  lua_settable(S->state, index);
   return 0;
 }
 
 static int lualua_settop(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
+  lualua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
-  int top = lua_gettop(S);
-  if (index > 0 && !lua_checkstack(S, index - top)) {
-    luaL_error(L, "lualua settop: cannot extend stack");
-  } else if (index < 0 && -1 - index > top) {
-    luaL_error(L, "lualua settop: cannot pop stack past the end");
+  if (index != 0 && index != -1 && !lualua_isacceptableindex(S, index)) {
+    luaL_error(L, "invalid settop index");
   }
-  lua_settop(S, index);
+  lua_settop(S->state, index);
   return 0;
 }
 
 static int lualua_toboolean(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  int b = lua_toboolean(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int b = lua_toboolean(S->state, index);
   lua_pushboolean(L, b);
   return 1;
 }
 
 static int lualua_tonumber(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  lua_Number number = lua_tonumber(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  lua_Number number = lua_tonumber(S->state, index);
   lua_pushnumber(L, number);
   return 1;
 }
 
 static int lualua_tostring(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  const char *s = lua_tostring(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  const char *s = lua_tostring(S->state, index);
   lua_pushstring(L, s);
   return 1;
 }
 
 static int lualua_typename(lua_State *L) {
-  lua_State *S = lualua_checkstate(L, 1);
-  int index = luaL_checkint(L, 2);
-  const char *s = luaL_typename(S, index);
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  const char *s = luaL_typename(S->state, index);
   lua_pushstring(L, s);
   return 1;
 }
