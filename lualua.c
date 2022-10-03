@@ -196,6 +196,7 @@ static int lualua_loadstring(lua_State *L) {
   size_t sz;
   const char *buff = luaL_checklstring(L, 2, &sz);
   const char *chunkname = luaL_optstring(L, 3, buff);
+  lualua_checkspace(L, S, 1);
   int value = luaL_loadbuffer(S->state, buff, sz, chunkname);
   lua_pushinteger(L, value);
   return 1;
@@ -377,6 +378,7 @@ static const lualua_Constant lualua_constants[] = {
     {"ERRERR", LUA_ERRERR},
     {"ERRMEM", LUA_ERRMEM},
     {"ERRRUN", LUA_ERRRUN},
+    {"ERRSYNTAX", LUA_ERRSYNTAX},
     {"GLOBALSINDEX", LUA_GLOBALSINDEX},
     {"MAXCSTACK", LUAI_MAXCSTACK},
     {"MINSTACK", LUA_MINSTACK},
