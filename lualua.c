@@ -232,19 +232,6 @@ static int lualua_pushboolean(lua_State *L) {
   return 0;
 }
 
-static int lualua_pushcclosure(lua_State *L) {
-  lualua_State *S = lualua_checkstate(L, 1);
-  lua_CFunction fn = lua_tocfunction(L, 2);
-  if (fn == NULL) {
-    luaL_error(L, "expected c function, got %s",
-               lua_typename(L, lua_type(L, 2)));
-  }
-  int n = luaL_checkint(L, 3);
-  lualua_checkspace(L, S, 1);
-  lua_pushcclosure(S->state, fn, n);
-  return 0;
-}
-
 static int lualua_pushnil(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   lualua_checkspace(L, S, 1);
@@ -353,7 +340,6 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pcall", lualua_pcall},
     {"pop", lualua_pop},
     {"pushboolean", lualua_pushboolean},
-    {"pushcclosure", lualua_pushcclosure},
     {"pushnil", lualua_pushnil},
     {"pushnumber", lualua_pushnumber},
     {"pushstring", lualua_pushstring},

@@ -727,13 +727,4 @@ describe('lualua', function()
       end)
     end)
   end)
-
-  it('can load C functions', function() -- TODO remove
-    local s = lib.newstate()
-    s:pushcclosure(loadstring, 0)
-    s:pushstring('return 42')
-    s:pcall(1, 1, 0)
-    s:pcall(0, 1, 0)
-    assert.same(42, s:tonumber(-1))
-  end)
 end)
