@@ -270,6 +270,12 @@ static int lualua_pushvalue(lua_State *L) {
 static int lualua_settable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
+    luaL_error(L, "attempt to index non-table value");
+  }
+  if (lua_gettop(S->state) < 2) {
+    luaL_error(L, "not enough elements on stack");
+  }
   lua_settable(S->state, index);
   return 0;
 }
