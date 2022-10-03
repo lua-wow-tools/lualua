@@ -63,6 +63,9 @@ static int lualua_checkstack(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
   int value = lua_checkstack(S->state, index);
+  if (value && index > 0) {
+    S->stackmax += index;
+  }
   lua_pushboolean(L, value);
   return 1;
 }
