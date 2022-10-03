@@ -79,7 +79,11 @@ static int lualua_error(lua_State *L) {
   if (lua_gettop(S->state) < 1) {
     luaL_error(L, "stack underflow");
   }
-  return luaL_error(L, "TODO this should propagate the sandbox error message");
+  if (!lua_isstring(S->state, -1)) {
+    luaL_error(L, "top of stack must be a string");
+  }
+  lua_pushstring(L, lua_tostring(S->state, -1));
+  return lua_error(L);
 }
 
 static int lualua_gettable(lua_State *L) {
@@ -255,12 +259,15 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
   lua_rawgeti(L, LUA_REGISTRYINDEX, hostfunref);
   lua_rawgeti(L, LUA_REGISTRYINDEX, S->hostuserdataref);
   int value = lua_pcall(L, 1, 1, 0);
-  int nreturn = lua_tonumber(L, -1);
-  lua_pop(L, 1);
   if (value != 0) {
-    luaL_error(SS, "host error");
+    lua_pushstring(SS, lua_tostring(L, -1));
+    lua_pop(L, 1);
+    return lua_error(SS);
+  } else {
+    int nreturn = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    return nreturn;
   }
-  return nreturn;
 }
 
 static int lualua_pushlfunction(lua_State *L) {
