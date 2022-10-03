@@ -256,10 +256,12 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
   lua_rawgeti(L, LUA_REGISTRYINDEX, hostfunref);
   lua_rawgeti(L, LUA_REGISTRYINDEX, S->hostuserdataref);
   int value = lua_pcall(L, 1, 1, 0);
+  int nreturn = lua_tonumber(L, -1);
+  lua_pop(L, 1);
   if (value != 0) {
-    lua_error(L);
+    luaL_error(SS, "host error");
   }
-  return lua_tonumber(L, -1);
+  return nreturn;
 }
 
 static int lualua_pushlfunction(lua_State *L) {
