@@ -79,8 +79,7 @@ static int lualua_error(lua_State *L) {
   if (lua_gettop(S->state) < 1) {
     luaL_error(L, "stack underflow");
   }
-  lua_error(S->state);
-  return 0;
+  return luaL_error(L, "TODO this should propagate the sandbox error message");
 }
 
 static int lualua_gettable(lua_State *L) {
