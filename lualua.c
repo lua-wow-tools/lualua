@@ -225,6 +225,16 @@ static int lualua_newtable(lua_State *L) {
   return 0;
 }
 
+static int lualua_newuserdata(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  lualua_checkspace(L, S, 1);
+  lua_newtable(L);
+  lua_pushvalue(L, -1);
+  int *p = lua_newuserdata(S->state, sizeof(int));
+  *p = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
+  return 1;
+}
+
 static int lualua_pcall(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
@@ -379,6 +389,14 @@ static int lualua_tostring(lua_State *L) {
   return 1;
 }
 
+static int lualua_touserdata(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int ref = *(int *)lua_touserdata(S->state, index);
+  lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+  return 1;
+}
+
 static int lualua_typename(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -408,6 +426,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"isuserdata", lualua_isuserdata},
     {"loadstring", lualua_loadstring},
     {"newtable", lualua_newtable},
+    {"newuserdata", lualua_newuserdata},
     {"pcall", lualua_pcall},
     {"pop", lualua_pop},
     {"pushboolean", lualua_pushboolean},
@@ -422,6 +441,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"toboolean", lualua_toboolean},
     {"tonumber", lualua_tonumber},
     {"tostring", lualua_tostring},
+    {"touserdata", lualua_touserdata},
     {"typename", lualua_typename},
     {NULL, NULL},
 };
