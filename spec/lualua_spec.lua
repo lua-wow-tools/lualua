@@ -225,6 +225,22 @@ describe('lualua', function()
         assert.same(1, s:gettop())
         assert.same(true, s:isstring(1))
       end)
+      it('success with MAXSTACK-1 returns', function()
+        local s = lib.newstate()
+        local t = {}
+        for i = 1, lib.MAXSTACK - 1 do
+          table.insert(t, i)
+        end
+        assert.same(0, nr(1, s:loadstring('return ' .. table.concat(t, ','))))
+      end)
+      it('failure with MAXSTACK returns', function()
+        local s = lib.newstate()
+        local t = {}
+        for i = 1, lib.MAXSTACK do
+          table.insert(t, i)
+        end
+        assert.same(lib.ERRSYNTAX, nr(1, s:loadstring('return ' .. table.concat(t, ','))))
+      end)
       it('fails on full stack', function()
         local s = lib.newstate()
         for _ = 1, lib.MINSTACK do
