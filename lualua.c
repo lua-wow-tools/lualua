@@ -247,7 +247,7 @@ static int lualua_invokefromregistry(lua_State *SS) {
   lua_rawgeti(L, LUA_REGISTRYINDEX, S->hostuserdataref);
   int value = lua_pcall(L, 1, 1, 0);
   if (value != 0) {
-    lua_error(L);
+    luaL_error(SS, "host error");
   }
   return lua_tonumber(L, -1);
 }
