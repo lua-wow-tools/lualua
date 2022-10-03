@@ -86,6 +86,15 @@ static int lualua_error(lua_State *L) {
   return lua_error(L);
 }
 
+static int lualua_getmetatable(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  lualua_checkspace(L, S, 1);
+  int result = lua_getmetatable(S->state, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
 static int lualua_gettable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -312,6 +321,17 @@ static int lualua_pushvalue(lua_State *L) {
   return 0;
 }
 
+static int lualua_setmetatable(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
+    luaL_error(L, "not a table");
+  }
+  int result = lua_setmetatable(S->state, index);
+  lua_pushboolean(L, result);
+  return 1;
+}
+
 static int lualua_settable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -371,6 +391,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"checkstack", lualua_checkstack},
     {"equal", lualua_equal},
     {"error", lualua_error},
+    {"getmetatable", lualua_getmetatable},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
     {"isboolean", lualua_isboolean},
@@ -395,6 +416,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pushnumber", lualua_pushnumber},
     {"pushstring", lualua_pushstring},
     {"pushvalue", lualua_pushvalue},
+    {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},
     {"settop", lualua_settop},
     {"toboolean", lualua_toboolean},
