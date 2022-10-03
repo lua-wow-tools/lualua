@@ -74,6 +74,15 @@ static int lualua_equal(lua_State *L) {
   return 1;
 }
 
+static int lualua_error(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  if (lua_gettop(S->state) < 1) {
+    luaL_error(L, "stack underflow");
+  }
+  lua_error(S->state);
+  return 0;
+}
+
 static int lualua_gettable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -239,10 +248,11 @@ static int lualua_pushboolean(lua_State *L) {
   return 0;
 }
 
-static int lualua_invokefromregistry(lua_State *SS) {
+static int lualua_invokefromhostregistry(lua_State *SS) {
   lualua_State *S = lua_touserdata(SS, lua_upvalueindex(1));
   int hostfunref = lua_tonumber(SS, lua_upvalueindex(2));
   lua_State *L = S->host;
+  lua_checkstack(L, 2);
   lua_rawgeti(L, LUA_REGISTRYINDEX, hostfunref);
   lua_rawgeti(L, LUA_REGISTRYINDEX, S->hostuserdataref);
   int value = lua_pcall(L, 1, 1, 0);
@@ -256,10 +266,10 @@ static int lualua_pushlfunction(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   luaL_argcheck(L, lua_isfunction(L, 2), 2, "function expected");
   lualua_checkspace(L, S, 2);
-  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  int hostfunref = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
   lua_pushlightuserdata(S->state, S);
-  lua_pushnumber(S->state, ref); /* TODO GC */
-  lua_pushcclosure(S->state, lualua_invokefromregistry, 2);
+  lua_pushnumber(S->state, hostfunref);
+  lua_pushcclosure(S->state, lualua_invokefromhostregistry, 2);
   return 0;
 }
 
@@ -352,6 +362,7 @@ static int lualua_typename(lua_State *L) {
 static const struct luaL_Reg lualua_state_index[] = {
     {"checkstack", lualua_checkstack},
     {"equal", lualua_equal},
+    {"error", lualua_error},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
     {"isboolean", lualua_isboolean},
