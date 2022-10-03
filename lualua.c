@@ -47,18 +47,6 @@ static int lualua_state_gc(lua_State *L) {
   return 0;
 }
 
-static int lualua_call(lua_State *L) {
-  lualua_State *S = lualua_checkstate(L, 1);
-  int nargs = luaL_checkint(L, 2);
-  int nresults = luaL_checkint(L, 3);
-  if (lua_gettop(S->state) < nargs + 1) {
-    luaL_error(L, "lualua call: insufficient elements on stack");
-  }
-  int value = lua_pcall(S->state, nargs, nresults, 0);
-  lua_pushinteger(L, value);
-  return 1;
-}
-
 static int lualua_checkstack(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
@@ -209,6 +197,22 @@ static int lualua_newtable(lua_State *L) {
   return 0;
 }
 
+static int lualua_pcall(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int nargs = luaL_checkint(L, 2);
+  int nresults = luaL_checkint(L, 3);
+  int errfunc = luaL_checkint(L, 4);
+  if (errfunc != 0) { /* TODO */
+    luaL_error(L, "pcall only supports errfunc==0");
+  }
+  if (lua_gettop(S->state) < nargs + 1) {
+    luaL_error(L, "stack underflow");
+  }
+  int value = lua_pcall(S->state, nargs, nresults, errfunc);
+  lua_pushinteger(L, value);
+  return 1;
+}
+
 static int lualua_pop(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int n = luaL_checkint(L, 2);
@@ -328,7 +332,6 @@ static int lualua_typename(lua_State *L) {
 }
 
 static const struct luaL_Reg lualua_state_index[] = {
-    {"call", lualua_call},
     {"checkstack", lualua_checkstack},
     {"equal", lualua_equal},
     {"gettable", lualua_gettable},
@@ -347,6 +350,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"isuserdata", lualua_isuserdata},
     {"loadstring", lualua_loadstring},
     {"newtable", lualua_newtable},
+    {"pcall", lualua_pcall},
     {"pop", lualua_pop},
     {"pushboolean", lualua_pushboolean},
     {"pushcclosure", lualua_pushcclosure},
