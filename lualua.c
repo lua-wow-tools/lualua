@@ -29,7 +29,9 @@ static lualua_State *lualua_checkstate(lua_State *L, int index) {
 
 static int lualua_isacceptableindex(lualua_State *S, int index) {
   return index > 0 && index <= S->stackmax ||
-         index < 0 && -index <= lua_gettop(S->state);
+         index < 0 && -index <= lua_gettop(S->state) ||
+         index == LUA_GLOBALSINDEX || index == LUA_REGISTRYINDEX ||
+         index == LUA_ENVIRONINDEX;
 }
 
 static int lualua_checkacceptableindex(lua_State *L, int index,
@@ -355,6 +357,20 @@ static int lualua_rawgeti(lua_State *L) {
   return 0;
 }
 
+static int lualua_ref(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
+    luaL_error(L, "attempt to index non-table value");
+  }
+  if (lua_gettop(S->state) < 1) {
+    luaL_error(L, "stack underflow");
+  }
+  int ref = luaL_ref(S->state, index);
+  lua_pushnumber(L, ref);
+  return 1;
+}
+
 static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -473,6 +489,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pushstring", lualua_pushstring},
     {"pushvalue", lualua_pushvalue},
     {"rawgeti", lualua_rawgeti},
+    {"ref", lualua_ref},
     {"setfield", lualua_setfield},
     {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},
