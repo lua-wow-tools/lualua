@@ -86,6 +86,18 @@ static int lualua_error(lua_State *L) {
   return lua_error(L);
 }
 
+static int lualua_getfield(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  const char *k = luaL_checkstring(L, 3);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
+    luaL_error(L, "attempt to index non-table value");
+  }
+  lualua_checkspace(L, S, 1);
+  lua_getfield(S->state, index, k);
+  return 0;
+}
+
 static int lualua_getmetatable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -331,6 +343,17 @@ static int lualua_pushvalue(lua_State *L) {
   return 0;
 }
 
+static int lualua_setfield(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  const char *k = luaL_checkstring(L, 3);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
+    luaL_error(L, "attempt to index non-table value");
+  }
+  lua_setfield(S->state, index, k);
+  return 0;
+}
+
 static int lualua_setmetatable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -409,6 +432,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"checkstack", lualua_checkstack},
     {"equal", lualua_equal},
     {"error", lualua_error},
+    {"getfield", lualua_getfield},
     {"getmetatable", lualua_getmetatable},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
@@ -435,6 +459,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pushnumber", lualua_pushnumber},
     {"pushstring", lualua_pushstring},
     {"pushvalue", lualua_pushvalue},
+    {"setfield", lualua_setfield},
     {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},
     {"settop", lualua_settop},
