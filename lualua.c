@@ -29,7 +29,8 @@ static lualua_State *lualua_checkstate(lua_State *L, int index) {
 
 static int lualua_isacceptableindex(lualua_State *S, int index) {
   return index > 0 && index <= S->stackmax ||
-         index < 0 && -index <= lua_gettop(S->state);
+         index < 0 && -index <= lua_gettop(S->state) ||
+         index == LUA_REGISTRYINDEX; /* TODO support other pseudo indices */
 }
 
 static int lualua_checkacceptableindex(lua_State *L, int index,
@@ -84,6 +85,15 @@ static int lualua_error(lua_State *L) {
   }
   lua_pushstring(L, lua_tostring(S->state, -1));
   return lua_error(L);
+}
+
+static int lualua_getfield(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  const char *k = luaL_checkstring(L, 3);
+  lualua_checkspace(L, S, 1);
+  lua_getfield(S->state, index, k);
+  return 0;
 }
 
 static int lualua_getmetatable(lua_State *L) {
@@ -255,7 +265,7 @@ static int lualua_pop(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int n = luaL_checkint(L, 2);
   /* Analogous to lualua_settop, since pop is defined in terms of settop. */
-  if (n != -1 && n != 0 && !lualua_isacceptableindex(S, -n - 1)) {
+  if (n != -1 && n != 0 && !lualua_isacceptableindex(S, -n)) {
     luaL_error(L, "stack underflow");
   }
   lua_pop(S->state, n);
@@ -328,6 +338,14 @@ static int lualua_pushvalue(lua_State *L) {
   int index = lualua_checkacceptableindex(L, 2, S);
   lualua_checkspace(L, S, 1);
   lua_pushvalue(S->state, index);
+  return 0;
+}
+
+static int lualua_setfield(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  const char *k = luaL_checkstring(L, 3);
+  lua_setfield(S->state, index, k);
   return 0;
 }
 
@@ -409,6 +427,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"checkstack", lualua_checkstack},
     {"equal", lualua_equal},
     {"error", lualua_error},
+    {"getfield", lualua_getfield},
     {"getmetatable", lualua_getmetatable},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
@@ -435,6 +454,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pushnumber", lualua_pushnumber},
     {"pushstring", lualua_pushstring},
     {"pushvalue", lualua_pushvalue},
+    {"setfield", lualua_setfield},
     {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},
     {"settop", lualua_settop},
