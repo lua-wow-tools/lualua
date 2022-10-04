@@ -255,7 +255,7 @@ static int lualua_pop(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int n = luaL_checkint(L, 2);
   /* Analogous to lualua_settop, since pop is defined in terms of settop. */
-  if (n != -1 && n != 0 && !lualua_isacceptableindex(S, -n - 1)) {
+  if (n != -1 && n != 0 && !lualua_isacceptableindex(S, -n)) {
     luaL_error(L, "stack underflow");
   }
   lua_pop(S->state, n);
