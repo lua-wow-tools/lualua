@@ -31,11 +31,11 @@ local stateindex = {
 
 local libindex = {
   newstate = function(s)
-    s:newuserdata()
+    local t = s:newuserdata()
     s:getfield(lualua.REGISTRYINDEX, 'lualua state')
     s:setmetatable(-2)
     s:pushvalue(-1)
-    s:setfield(lualua.REGISTRYINDEX, 'TODO newstate') -- TODO implement ref
+    t.ref = s:ref(lualua.REGISTRYINDEX)
     return 1
   end,
 }
