@@ -343,6 +343,18 @@ static int lualua_pushvalue(lua_State *L) {
   return 0;
 }
 
+static int lualua_rawgeti(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int n = luaL_checkint(L, 3);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
+    luaL_error(L, "type error");
+  }
+  lualua_checkspace(L, S, 1);
+  lua_rawgeti(S->state, index, n);
+  return 0;
+}
+
 static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -460,6 +472,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pushnumber", lualua_pushnumber},
     {"pushstring", lualua_pushstring},
     {"pushvalue", lualua_pushvalue},
+    {"rawgeti", lualua_rawgeti},
     {"setfield", lualua_setfield},
     {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},
