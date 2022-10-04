@@ -21,7 +21,13 @@ local function register(s, t)
   end
 end
 
-local stateindex = {}
+local stateindex = {
+  gettop = function(s)
+    -- TODO implement
+    s:pushnumber(0)
+    return 1
+  end,
+}
 
 local libindex = {
   newstate = function(s)
@@ -29,6 +35,8 @@ local libindex = {
     s:getfield(lualua.REGISTRYINDEX, 'lualua state')
     s:setmetatable(-2)
     s:pushvalue(-1)
+    s:setfield(lualua.REGISTRYINDEX, 'TODO newstate') -- TODO implement ref
+    return 1
   end,
 }
 

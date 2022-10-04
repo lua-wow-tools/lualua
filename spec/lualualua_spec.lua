@@ -7,8 +7,12 @@ describe('lualualua', function()
       return s:gettop() < lib.MINSTACK
     ]])
     s:pushlfunction(require('lualualua'))
-    assert.same(0, s:pcall(0, 1, 0))
-    assert.same(0, s:pcall(0, 1, 0))
+    if s:pcall(0, 1, 0) ~= 0 then
+      error(s:tostring(-1))
+    end
+    if s:pcall(1, 1, 0) ~= 0 then
+      error(s:tostring(-1))
+    end
     assert.same(true, s:toboolean(1))
   end)
 end)
