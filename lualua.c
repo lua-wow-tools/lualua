@@ -91,6 +91,9 @@ static int lualua_getfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   const char *k = luaL_checkstring(L, 3);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
+    luaL_error(L, "attempt to index non-table value");
+  }
   lualua_checkspace(L, S, 1);
   lua_getfield(S->state, index, k);
   return 0;
@@ -345,6 +348,9 @@ static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   const char *k = luaL_checkstring(L, 3);
+  if (lua_type(S->state, index) != LUA_TTABLE) {
+    luaL_error(L, "attempt to index non-table value");
+  }
   lua_setfield(S->state, index, k);
   return 0;
 }
