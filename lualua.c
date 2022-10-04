@@ -357,8 +357,9 @@ static int lualua_setfield(lua_State *L) {
 static int lualua_setmetatable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "not a table");
+  int type = lua_type(S->state, index);
+  if (type != LUA_TTABLE && type != LUA_TUSERDATA) {
+    luaL_error(L, "type error");
   }
   int result = lua_setmetatable(S->state, index);
   lua_pushboolean(L, result);
