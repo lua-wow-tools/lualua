@@ -15,7 +15,7 @@ static int lualua_atpanic(lua_State *SS) {
   lua_State *L = lua_touserdata(SS, -1);
   lua_pop(SS, 1);
   lua_pushstring(L, lua_tostring(SS, -1));
-  lua_error(L);
+  return lua_error(L);
 }
 
 static int lualua_newstate(lua_State *L) {
