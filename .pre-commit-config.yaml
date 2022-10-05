@@ -17,6 +17,9 @@ repos:
     args:
     - --style=Google
     - -i
+  - id: clang-tidy
+    args:
+    - --warnings-as-errors=*
 - repo: local
   hooks:
   - id: luacheck
