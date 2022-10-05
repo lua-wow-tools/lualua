@@ -125,6 +125,7 @@ static int lualua_error(lua_State *L) {
     luaL_error(L, "top of stack must be a string");
   }
   lua_pushstring(L, lua_tostring(S->state, -1));
+  lua_pop(S->state, 1);
   return lua_error(L);
 }
 
@@ -295,8 +296,15 @@ static int lualua_pcall(lua_State *L) {
     luaL_error(L, "only errfunc==0 supported");
   }
   lualua_checkunderflow(L, S, nargs + 1);
-  lualua_Call call = {S->state, nargs, nresults};
+  lualua_checkoverflow(L, S, 1);
+  lua_State *T = lua_newthread(S->state);
+  lua_insert(S->state, -nargs - 2);
+  lua_xmove(S->state, T, nargs + 1);
+  lualua_Call call = {T, nargs, nresults};
   int result = lua_cpcall(L, lualua_docall, &call);
+  int nr = lua_gettop(T);
+  lua_xmove(T, S->state, nr);
+  lua_remove(S->state, -nr - 1);
   lua_pushinteger(L, result);
   return 1;
 }
