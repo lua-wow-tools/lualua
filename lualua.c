@@ -83,6 +83,7 @@ typedef struct {
 static int lualua_docall(lua_State *L) {
   lualua_Call *call = lua_touserdata(L, 1);
   lua_call(call->state, call->nargs, call->nresults);
+  return 0;
 }
 
 static int lualua_call(lua_State *L) {
