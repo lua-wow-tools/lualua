@@ -10,13 +10,24 @@ typedef struct {
 
 static const char lualua_state_metatable[] = "lualua state";
 
+static int lualua_atpanic(lua_State *SS) {
+  lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
+  lua_State *L = lua_touserdata(SS, -1);
+  lua_pushstring(L, lua_tostring(SS, -2));
+  lua_error(L);
+}
+
 static int lualua_newstate(lua_State *L) {
   lualua_State *p = lua_newuserdata(L, sizeof(*p));
   luaL_getmetatable(L, lualua_state_metatable);
   lua_setmetatable(L, -2);
   lua_pushvalue(L, -1);
   int ref = luaL_ref(L, LUA_REGISTRYINDEX);
-  p->state = luaL_newstate();
+  lua_State *SS = luaL_newstate();
+  lua_pushlightuserdata(SS, L);
+  lua_setfield(SS, LUA_REGISTRYINDEX, "lualuahost");
+  lua_atpanic(SS, lualua_atpanic);
+  p->state = SS;
   p->host = L;
   p->stackmax = LUA_MINSTACK;
   p->hostuserdataref = ref;
@@ -62,6 +73,29 @@ static int lualua_state_gc(lua_State *L) {
   return 0;
 }
 
+typedef struct {
+  lua_State *state;
+  int nargs;
+  int nresults;
+} lualua_Call;
+
+static int lualua_docall(lua_State *L) {
+  lualua_Call *call = lua_touserdata(L, 1);
+  lua_call(call->state, call->nargs, call->nresults);
+}
+
+static int lualua_call(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int nargs = luaL_checkint(L, 2);
+  int nresults = luaL_checkint(L, 3);
+  lualua_checkunderflow(L, S, nargs + 1);
+  lualua_Call call = {S->state, nargs, nresults};
+  if (lua_cpcall(L, lualua_docall, &call) != 0) {
+    lua_error(L);
+  }
+  return 1;
+}
+
 static int lualua_checkstack(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
@@ -96,9 +130,6 @@ static int lualua_getfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   const char *k = luaL_checkstring(L, 3);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
   lualua_checkoverflow(L, S, 1);
   lua_getfield(S->state, index, k);
   return 0;
@@ -262,8 +293,9 @@ static int lualua_pcall(lua_State *L) {
     luaL_error(L, "invalid index");
   }
   lualua_checkunderflow(L, S, nargs + 1);
-  int value = lua_pcall(S->state, nargs, nresults, errfunc);
-  lua_pushinteger(L, value);
+  lualua_Call call = {S->state, nargs, nresults};
+  int result = lua_cpcall(L, lualua_docall, &call);
+  lua_pushinteger(L, result);
   return 1;
 }
 
@@ -456,6 +488,7 @@ static int lualua_typename(lua_State *L) {
 }
 
 static const struct luaL_Reg lualua_state_index[] = {
+    {"call", lualua_call},
     {"checkstack", lualua_checkstack},
     {"equal", lualua_equal},
     {"error", lualua_error},
