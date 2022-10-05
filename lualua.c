@@ -94,7 +94,7 @@ static int lualua_call(lua_State *L) {
   if (lua_cpcall(L, lualua_docall, &call) != 0) {
     lua_error(L);
   }
-  return 1;
+  return 0;
 }
 
 static int lualua_checkstack(lua_State *L) {
