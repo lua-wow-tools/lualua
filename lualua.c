@@ -13,7 +13,8 @@ static const char lualua_state_metatable[] = "lualua state";
 static int lualua_atpanic(lua_State *SS) {
   lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
   lua_State *L = lua_touserdata(SS, -1);
-  lua_pushstring(L, lua_tostring(SS, -2));
+  lua_pop(SS, 1);
+  lua_pushstring(L, lua_tostring(SS, -1));
   lua_error(L);
 }
 
