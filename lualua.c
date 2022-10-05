@@ -291,8 +291,8 @@ static int lualua_pcall(lua_State *L) {
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
   int errfunc = luaL_checkint(L, 4);
-  if (errfunc != 0 && !lualua_isacceptableindex(S, errfunc)) {
-    luaL_error(L, "invalid index");
+  if (errfunc != 0) {
+    luaL_error(L, "only errfunc==0 supported");
   }
   lualua_checkunderflow(L, S, nargs + 1);
   lualua_Call call = {S->state, nargs, nresults};
