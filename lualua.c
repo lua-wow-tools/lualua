@@ -4,7 +4,7 @@
 typedef struct {
   lua_State *state;
   int stackmax;
-  int hostuserdataref;
+  int stateowner;
 } lualua_State;
 
 static const char lualua_state_metatable[] = "lualua state";
@@ -21,15 +21,13 @@ static int lualua_newstate(lua_State *L) {
   lualua_State *p = lua_newuserdata(L, sizeof(*p));
   luaL_getmetatable(L, lualua_state_metatable);
   lua_setmetatable(L, -2);
-  lua_pushvalue(L, -1);
-  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
   lua_State *SS = luaL_newstate();
   lua_pushlightuserdata(SS, L);
   lua_setfield(SS, LUA_REGISTRYINDEX, "lualuahost");
   lua_atpanic(SS, lualua_atpanic);
   p->state = SS;
   p->stackmax = LUA_MINSTACK;
-  p->hostuserdataref = ref;
+  p->stateowner = 1;
   return 1;
 }
 
@@ -69,8 +67,9 @@ static void lualua_checkunderflow(lualua_State *S, int space) {
 
 static int lualua_state_gc(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lua_close(S->state);
-  luaL_unref(L, LUA_REGISTRYINDEX, S->hostuserdataref);
+  if (S->stateowner) {
+    lua_close(S->state);
+  }
   return 0;
 }
 
@@ -322,14 +321,20 @@ static int lualua_pushboolean(lua_State *L) {
 }
 
 static int lualua_invokefromhostregistry(lua_State *SS) {
-  lualua_State *S = lua_touserdata(SS, lua_upvalueindex(1));
-  int hostfunref = lua_tonumber(SS, lua_upvalueindex(2));
+  int hostfunref = lua_tonumber(SS, lua_upvalueindex(1));
   lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
   lua_State *L = lua_touserdata(SS, -1);
   lua_pop(SS, 1);
-  lua_checkstack(L, 2);
+  if (!lua_checkstack(L, 3)) {
+    return luaL_error(SS, "host stack overflow");
+  }
   lua_rawgeti(L, LUA_REGISTRYINDEX, hostfunref);
-  lua_rawgeti(L, LUA_REGISTRYINDEX, S->hostuserdataref);
+  lualua_State *p = lua_newuserdata(L, sizeof(*p));
+  luaL_getmetatable(L, lualua_state_metatable);
+  lua_setmetatable(L, -2);
+  p->state = SS;
+  p->stackmax = LUA_MINSTACK;
+  p->stateowner = 0;
   int value = lua_pcall(L, 1, 1, 0);
   if (value != 0) {
     lua_pushstring(SS, lua_tostring(L, -1));
@@ -348,9 +353,8 @@ static int lualua_pushlfunction(lua_State *L) {
   lua_settop(L, 2);
   lualua_checkoverflow(S, 2);
   int hostfunref = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
-  lua_pushlightuserdata(S->state, S);
   lua_pushnumber(S->state, hostfunref);
-  lua_pushcclosure(S->state, lualua_invokefromhostregistry, 2);
+  lua_pushcclosure(S->state, lualua_invokefromhostregistry, 1);
   return 0;
 }
 
