@@ -13,8 +13,8 @@ static const char lualua_state_metatable[] = "lualua state";
 static int lualua_atpanic(lua_State *SS) {
   lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
   lua_State *L = lua_touserdata(SS, -1);
-  lua_pop(SS, 1);
-  lua_pushstring(L, lua_tostring(SS, -1));
+  lua_pushstring(L, lua_tostring(SS, -2));
+  lua_settop(SS, 0);
   return lua_error(L);
 }
 
@@ -40,31 +40,33 @@ static lualua_State *lualua_checkstate(lua_State *L, int index) {
 }
 
 static int lualua_isacceptableindex(lualua_State *S, int index) {
-  return index > 0 && index <= S->stackmax ||
-         index < 0 && -index <= lua_gettop(S->state) ||
+  return (index > 0 && index <= S->stackmax) ||
+         (index < 0 && -index <= lua_gettop(S->state)) ||
          index == LUA_GLOBALSINDEX || index == LUA_REGISTRYINDEX ||
          index == LUA_ENVIRONINDEX;
+}
+
+static void lualua_assert(lualua_State *S, int cond, const char *msg) {
+  if (!cond) {
+    lua_settop(S->state, 0);
+    luaL_error(S->state, msg);
+  }
 }
 
 static int lualua_checkacceptableindex(lua_State *L, int index,
                                        lualua_State *S) {
   int k = luaL_checkint(L, index);
-  if (!lualua_isacceptableindex(S, k)) {
-    luaL_error(L, "invalid index");
-  }
+  lualua_assert(S, lualua_isacceptableindex(S, k), "invalid index");
   return k;
 }
 
-static void lualua_checkoverflow(lua_State *L, lualua_State *S, int space) {
-  if (S->stackmax - lua_gettop(S->state) < space) {
-    luaL_error(L, "stack overflow");
-  }
+static void lualua_checkoverflow(lualua_State *S, int space) {
+  lualua_assert(S, S->stackmax - lua_gettop(S->state) >= space,
+                "stack overflow");
 }
 
-static void lualua_checkunderflow(lua_State *L, lualua_State *S, int space) {
-  if (lua_gettop(S->state) < space) {
-    luaL_error(L, "stack underflow");
-  }
+static void lualua_checkunderflow(lualua_State *S, int space) {
+  lualua_assert(S, lua_gettop(S->state) >= space, "stack underflow");
 }
 
 static int lualua_state_gc(lua_State *L) {
@@ -74,27 +76,12 @@ static int lualua_state_gc(lua_State *L) {
   return 0;
 }
 
-typedef struct {
-  lua_State *state;
-  int nargs;
-  int nresults;
-} lualua_Call;
-
-static int lualua_docall(lua_State *L) {
-  lualua_Call *call = lua_touserdata(L, 1);
-  lua_call(call->state, call->nargs, call->nresults);
-  return 0;
-}
-
 static int lualua_call(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
-  lualua_checkunderflow(L, S, nargs + 1);
-  lualua_Call call = {S->state, nargs, nresults};
-  if (lua_cpcall(L, lualua_docall, &call) != 0) {
-    lua_error(L);
-  }
+  lualua_checkunderflow(S, nargs + 1);
+  lua_call(S->state, nargs, nresults);
   return 0;
 }
 
@@ -120,20 +107,15 @@ static int lualua_equal(lua_State *L) {
 
 static int lualua_error(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lualua_checkunderflow(L, S, 1);
-  if (!lua_isstring(S->state, -1)) {
-    luaL_error(L, "top of stack must be a string");
-  }
-  lua_pushstring(L, lua_tostring(S->state, -1));
-  lua_pop(S->state, 1);
-  return lua_error(L);
+  lualua_checkunderflow(S, 1);
+  return lua_error(S->state);
 }
 
 static int lualua_getfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   const char *k = luaL_checkstring(L, 3);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   lua_getfield(S->state, index, k);
   return 0;
 }
@@ -141,7 +123,7 @@ static int lualua_getfield(lua_State *L) {
 static int lualua_getmetatable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   int result = lua_getmetatable(S->state, index);
   lua_pushboolean(L, result);
   return 1;
@@ -150,9 +132,6 @@ static int lualua_getmetatable(lua_State *L) {
 static int lualua_gettable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
   lua_gettable(S->state, index);
   return 0;
 }
@@ -264,7 +243,7 @@ static int lualua_loadstring(lua_State *L) {
   size_t sz;
   const char *buff = luaL_checklstring(L, 2, &sz);
   const char *chunkname = luaL_optstring(L, 3, buff);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   int value = luaL_loadbuffer(S->state, buff, sz, chunkname);
   lua_pushinteger(L, value);
   return 1;
@@ -272,19 +251,31 @@ static int lualua_loadstring(lua_State *L) {
 
 static int lualua_newtable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   lua_newtable(S->state);
   return 0;
 }
 
 static int lualua_newuserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   lua_newtable(L);
   lua_pushvalue(L, -1);
   int *p = lua_newuserdata(S->state, sizeof(int));
   *p = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
   return 1;
+}
+
+typedef struct {
+  lua_State *state;
+  int nargs;
+  int nresults;
+} lualua_Call;
+
+static int lualua_docall(lua_State *L) {
+  lualua_Call *call = lua_touserdata(L, 1);
+  lua_call(call->state, call->nargs, call->nresults);
+  return 0;
 }
 
 static int lualua_pcall(lua_State *L) {
@@ -295,8 +286,8 @@ static int lualua_pcall(lua_State *L) {
   if (errfunc != 0) {
     luaL_error(L, "only errfunc==0 supported");
   }
-  lualua_checkunderflow(L, S, nargs + 1);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkunderflow(S, nargs + 1);
+  lualua_checkoverflow(S, 1);
   lua_State *T = lua_newthread(S->state);
   lua_insert(S->state, -nargs - 2);
   lua_xmove(S->state, T, nargs + 1);
@@ -313,9 +304,8 @@ static int lualua_pop(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int n = luaL_checkint(L, 2);
   /* Analogous to lualua_settop, since pop is defined in terms of settop. */
-  if (n != -1 && n != 0 && !lualua_isacceptableindex(S, -n)) {
-    luaL_error(L, "stack underflow");
-  }
+  lualua_assert(S, n == -1 || n == 0 || lualua_isacceptableindex(S, -n),
+                "stack underflow");
   lua_pop(S->state, n);
   return 0;
 }
@@ -323,7 +313,7 @@ static int lualua_pop(lua_State *L) {
 static int lualua_pushboolean(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int b = lua_toboolean(L, 2);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   lua_pushboolean(S->state, b);
   return 0;
 }
@@ -350,7 +340,8 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
 static int lualua_pushlfunction(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   luaL_argcheck(L, lua_isfunction(L, 2), 2, "function expected");
-  lualua_checkoverflow(L, S, 2);
+  lua_settop(L, 2);
+  lualua_checkoverflow(S, 2);
   int hostfunref = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
   lua_pushlightuserdata(S->state, S);
   lua_pushnumber(S->state, hostfunref);
@@ -360,7 +351,7 @@ static int lualua_pushlfunction(lua_State *L) {
 
 static int lualua_pushnil(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   lua_pushnil(S->state);
   return 0;
 }
@@ -368,7 +359,7 @@ static int lualua_pushnil(lua_State *L) {
 static int lualua_pushnumber(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   lua_Number n = luaL_checknumber(L, 2);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   lua_pushnumber(S->state, n);
   return 0;
 }
@@ -376,7 +367,7 @@ static int lualua_pushnumber(lua_State *L) {
 static int lualua_pushstring(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   const char *s = luaL_checkstring(L, 2);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   lua_pushstring(S->state, s);
   return 0;
 }
@@ -384,7 +375,7 @@ static int lualua_pushstring(lua_State *L) {
 static int lualua_pushvalue(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  lualua_checkoverflow(L, S, 1);
+  lualua_checkoverflow(S, 1);
   lua_pushvalue(S->state, index);
   return 0;
 }
@@ -393,10 +384,8 @@ static int lualua_rawgeti(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   int n = luaL_checkint(L, 3);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "type error");
-  }
-  lualua_checkoverflow(L, S, 1);
+  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_checkoverflow(S, 1);
   lua_rawgeti(S->state, index, n);
   return 0;
 }
@@ -404,10 +393,8 @@ static int lualua_rawgeti(lua_State *L) {
 static int lualua_ref(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
-  lualua_checkunderflow(L, S, 1);
+  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_checkunderflow(S, 1);
   int ref = luaL_ref(S->state, index);
   lua_pushnumber(L, ref);
   return 1;
@@ -417,9 +404,6 @@ static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   const char *k = luaL_checkstring(L, 3);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
   lua_setfield(S->state, index, k);
   return 0;
 }
@@ -427,10 +411,8 @@ static int lualua_setfield(lua_State *L) {
 static int lualua_setmetatable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  int type = lua_type(S->state, index);
-  if (type != LUA_TTABLE && type != LUA_TUSERDATA) {
-    luaL_error(L, "type error");
-  }
+  int type = lua_type(S->state, -1);
+  lualua_assert(S, type == LUA_TTABLE || type == LUA_TNIL, "type error");
   int result = lua_setmetatable(S->state, index);
   lua_pushboolean(L, result);
   return 1;
@@ -439,10 +421,7 @@ static int lualua_setmetatable(lua_State *L) {
 static int lualua_settable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  lualua_checkunderflow(L, S, 2);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
+  lualua_checkunderflow(S, 2);
   lua_settable(S->state, index);
   return 0;
 }
@@ -450,9 +429,9 @@ static int lualua_settable(lua_State *L) {
 static int lualua_settop(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = luaL_checkint(L, 2);
-  if (index != 0 && index != -1 && !lualua_isacceptableindex(S, index)) {
-    luaL_error(L, "invalid settop index");
-  }
+  lualua_assert(S,
+                index == -1 || index == 0 || lualua_isacceptableindex(S, index),
+                "invalid settop index");
   lua_settop(S->state, index);
   return 0;
 }
