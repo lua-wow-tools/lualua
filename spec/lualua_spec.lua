@@ -405,7 +405,7 @@ describe('lualua', function()
         assert.False(pcall(function()
           s:loadstring('return 42')
         end))
-        assert.same(lib.MINSTACK, s:gettop())
+        assert.same(0, s:gettop())
       end)
     end)
 
