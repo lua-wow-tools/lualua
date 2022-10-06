@@ -293,9 +293,14 @@ static int lualua_pcall(lua_State *L) {
   lua_xmove(S->state, T, nargs + 1);
   lualua_Call call = {T, nargs, nresults};
   int result = lua_cpcall(L, lualua_docall, &call);
-  int nr = lua_gettop(T);
-  lua_xmove(T, S->state, nr);
-  lua_remove(S->state, -nr - 1);
+  if (result == 0) {
+    int nr = lua_gettop(T);
+    lua_xmove(T, S->state, nr);
+    lua_remove(S->state, -nr - 1);
+  } else {
+    lua_pop(S->state, 1);
+    lua_pushstring(S->state, lua_tostring(L, -1));
+  }
   lua_pushinteger(L, result);
   return 1;
 }
