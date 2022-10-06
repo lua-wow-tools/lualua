@@ -40,8 +40,8 @@ static lualua_State *lualua_checkstate(lua_State *L, int index) {
 }
 
 static int lualua_isacceptableindex(lualua_State *S, int index) {
-  return index > 0 && index <= S->stackmax ||
-         index < 0 && -index <= lua_gettop(S->state) ||
+  return (index > 0 && index <= S->stackmax) ||
+         (index < 0 && -index <= lua_gettop(S->state)) ||
          index == LUA_GLOBALSINDEX || index == LUA_REGISTRYINDEX ||
          index == LUA_ENVIRONINDEX;
 }
