@@ -266,6 +266,19 @@ static int lualua_newuserdata(lua_State *L) {
   return 1;
 }
 
+static int lualua_pcall(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int nargs = luaL_checkint(L, 2);
+  int nresults = luaL_checkint(L, 3);
+  int errfunc = luaL_checkint(L, 4);
+  lualua_assert(S, errfunc == 0 || lualua_isacceptableindex(S, errfunc),
+                "invalid index");
+  lualua_checkunderflow(S, nargs + 1);
+  int result = lua_pcall(S->state, nargs, nresults, errfunc);
+  lua_pushnumber(L, result);
+  return 1;
+}
+
 static int lualua_pop(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int n = luaL_checkint(L, 2);
@@ -466,6 +479,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"loadstring", lualua_loadstring},
     {"newtable", lualua_newtable},
     {"newuserdata", lualua_newuserdata},
+    {"pcall", lualua_pcall},
     {"pop", lualua_pop},
     {"pushboolean", lualua_pushboolean},
     {"pushlfunction", lualua_pushlfunction},
