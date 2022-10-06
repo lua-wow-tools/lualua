@@ -61,9 +61,9 @@ static void lualua_checkoverflow(lua_State *L, lualua_State *S, int space) {
   }
 }
 
-static void lualua_checkunderflow(lua_State *L, lualua_State *S, int space) {
+static void lualua_checkunderflow(lualua_State *S, int space) {
   if (lua_gettop(S->state) < space) {
-    luaL_error(L, "stack underflow");
+    luaL_error(S->state, "stack underflow");
   }
 }
 
@@ -78,7 +78,7 @@ static int lualua_call(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
-  lualua_checkunderflow(L, S, nargs + 1);
+  lualua_checkunderflow(S, nargs + 1);
   lua_call(S->state, nargs, nresults);
   return 0;
 }
@@ -105,7 +105,7 @@ static int lualua_equal(lua_State *L) {
 
 static int lualua_error(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lualua_checkunderflow(L, S, 1);
+  lualua_checkunderflow(S, 1);
   if (!lua_isstring(S->state, -1)) {
     luaL_error(L, "top of stack must be a string");
   }
@@ -362,7 +362,7 @@ static int lualua_ref(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   luaL_checktype(S->state, index, LUA_TTABLE);
-  lualua_checkunderflow(L, S, 1);
+  lualua_checkunderflow(S, 1);
   int ref = luaL_ref(S->state, index);
   lua_pushnumber(L, ref);
   return 1;
@@ -391,7 +391,7 @@ static int lualua_setmetatable(lua_State *L) {
 static int lualua_settable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  lualua_checkunderflow(L, S, 2);
+  lualua_checkunderflow(S, 2);
   lua_settable(S->state, index);
   return 0;
 }
