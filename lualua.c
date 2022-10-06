@@ -352,9 +352,7 @@ static int lualua_rawgeti(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   int n = luaL_checkint(L, 3);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "type error");
-  }
+  luaL_checktype(S->state, index, LUA_TTABLE);
   lualua_checkoverflow(L, S, 1);
   lua_rawgeti(S->state, index, n);
   return 0;
@@ -363,9 +361,7 @@ static int lualua_rawgeti(lua_State *L) {
 static int lualua_ref(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
+  luaL_checktype(S->state, index, LUA_TTABLE);
   lualua_checkunderflow(L, S, 1);
   int ref = luaL_ref(S->state, index);
   lua_pushnumber(L, ref);
