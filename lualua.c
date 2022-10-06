@@ -3,7 +3,6 @@
 
 typedef struct {
   lua_State *state;
-  lua_State *host;
   int stackmax;
   int hostuserdataref;
 } lualua_State;
@@ -29,7 +28,6 @@ static int lualua_newstate(lua_State *L) {
   lua_setfield(SS, LUA_REGISTRYINDEX, "lualuahost");
   lua_atpanic(SS, lualua_atpanic);
   p->state = SS;
-  p->host = L;
   p->stackmax = LUA_MINSTACK;
   p->hostuserdataref = ref;
   return 1;
@@ -326,7 +324,9 @@ static int lualua_pushboolean(lua_State *L) {
 static int lualua_invokefromhostregistry(lua_State *SS) {
   lualua_State *S = lua_touserdata(SS, lua_upvalueindex(1));
   int hostfunref = lua_tonumber(SS, lua_upvalueindex(2));
-  lua_State *L = S->host;
+  lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
+  lua_State *L = lua_touserdata(SS, -1);
+  lua_pop(SS, 1);
   lua_checkstack(L, 2);
   lua_rawgeti(L, LUA_REGISTRYINDEX, hostfunref);
   lua_rawgeti(L, LUA_REGISTRYINDEX, S->hostuserdataref);
