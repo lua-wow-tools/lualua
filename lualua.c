@@ -133,9 +133,6 @@ static int lualua_getmetatable(lua_State *L) {
 static int lualua_gettable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
   lua_gettable(S->state, index);
   return 0;
 }
@@ -378,9 +375,6 @@ static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   const char *k = luaL_checkstring(L, 3);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
   lua_setfield(S->state, index, k);
   return 0;
 }
@@ -401,9 +395,6 @@ static int lualua_settable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   lualua_checkunderflow(L, S, 2);
-  if (lua_type(S->state, index) != LUA_TTABLE) {
-    luaL_error(L, "attempt to index non-table value");
-  }
   lua_settable(S->state, index);
   return 0;
 }
