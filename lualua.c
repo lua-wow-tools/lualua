@@ -308,6 +308,7 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
 static int lualua_pushlfunction(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   luaL_argcheck(L, lua_isfunction(L, 2), 2, "function expected");
+  lua_settop(L, 2);
   lualua_checkoverflow(L, S, 2);
   int hostfunref = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
   lua_pushlightuserdata(S->state, S);
