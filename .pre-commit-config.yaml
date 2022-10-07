@@ -32,14 +32,9 @@ repos:
     entry: luarocks lint
     files: .*\.rockspec
     language: system
-  - id: build
-    name: build
-    entry: luarocks build --no-install
-    language: system
-    pass_filenames: false
-  - id: busted
-    name: busted
-    entry: bash -c "busted || false"
+  - id: make-test
+    name: make test
+    entry: make test
     language: system
     pass_filenames: false
 - repo: meta
