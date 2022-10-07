@@ -42,6 +42,11 @@ repos:
     entry: bash -c "busted || false"
     language: system
     pass_filenames: false
+  - id: cmake-build
+    name: cmake build
+    entry: bash -c "cmake -B build && cmake --build build"
+    language: system
+    pass_filenames: false
 - repo: meta
   hooks:
   - id: check-hooks-apply
