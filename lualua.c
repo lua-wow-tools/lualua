@@ -302,7 +302,8 @@ static int lualua_pcall(lua_State *L) {
   int nresults = luaL_checkint(L, 3);
   int errfunc = luaL_checkint(L, 4);
   if (errfunc != 0) {
-    luaL_error(L, "only errfunc==0 supported");
+    lualua_assert(S, lualua_isacceptableindex(S, errfunc), "invalid index");
+    errfunc = errfunc >= 0 ? errfunc : lua_gettop(S->state) + errfunc + 1;
   }
   lualua_checkunderflow(S, nargs + 1);
   lualua_checkoverflow(S, 1);
@@ -315,9 +316,26 @@ static int lualua_pcall(lua_State *L) {
     int nr = lua_gettop(T);
     lua_xmove(T, S->state, nr);
     lua_remove(S->state, -nr - 1);
-  } else {
+  } else if (errfunc == 0) {
     lua_pop(S->state, 1);
     lua_pushstring(S->state, lua_tostring(L, -1));
+  } else if (lua_type(S->state, errfunc) != LUA_TFUNCTION) {
+    lua_pop(S->state, 1);
+    lua_pushstring(S->state, "errfunc error");
+    result = LUA_ERRERR;
+  } else {
+    lua_pushvalue(S->state, errfunc);
+    lua_xmove(S->state, T, 1);
+    lua_pushstring(T, lua_tostring(L, -1));
+    lualua_Call ecall = {T, 1, 1};
+    if (lua_cpcall(L, lualua_docall, &ecall) != 0) {
+      lua_pop(S->state, 1);
+      lua_pushstring(S->state, "errfunc error");
+      result = LUA_ERRERR;
+    } else {
+      lua_xmove(T, S->state, 1);
+      lua_remove(S->state, -2);
+    }
   }
   lua_pushinteger(L, result);
   return 1;
