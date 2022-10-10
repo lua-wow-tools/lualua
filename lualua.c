@@ -296,6 +296,12 @@ static int lualua_docall(lua_State *L) {
   return 0;
 }
 
+static int lualua_docpcall(lua_State *L, lua_State *S, int nargs,
+                           int nresults) {
+  lualua_Call call = {S, nargs, nresults};
+  return lua_cpcall(L, lualua_docall, &call);
+}
+
 static int lualua_pcall(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
@@ -310,8 +316,7 @@ static int lualua_pcall(lua_State *L) {
   lua_State *T = lua_newthread(S->state);
   lua_insert(S->state, -nargs - 2);
   lua_xmove(S->state, T, nargs + 1);
-  lualua_Call call = {T, nargs, nresults};
-  int result = lua_cpcall(L, lualua_docall, &call);
+  int result = lualua_docpcall(L, T, nargs, nresults);
   if (result == 0) {
     int nr = lua_gettop(T);
     lua_xmove(T, S->state, nr);
@@ -327,8 +332,7 @@ static int lualua_pcall(lua_State *L) {
     lua_pushvalue(S->state, errfunc);
     lua_xmove(S->state, T, 1);
     lua_pushstring(T, lua_tostring(L, -1));
-    lualua_Call ecall = {T, 1, 1};
-    if (lua_cpcall(L, lualua_docall, &ecall) != 0) {
+    if (lualua_docpcall(L, T, 1, 1) != 0) {
       lua_pop(S->state, 1);
       lua_pushstring(S->state, "errfunc error");
       result = LUA_ERRERR;
