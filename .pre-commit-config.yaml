@@ -17,26 +17,24 @@ repos:
     args:
     - --style=Google
     - -i
+  - id: clang-tidy
+    args:
+    - --warnings-as-errors=*
 - repo: local
   hooks:
   - id: luacheck
     name: luacheck
-    entry: luacheck
+    entry: /opt/lua-5.1.5/bin/luacheck
     language: system
     types: [lua]
   - id: luarocks-lint
     name: luarocks lint
-    entry: luarocks lint
+    entry: /opt/lua-5.1.5/bin/luarocks lint
     files: .*\.rockspec
     language: system
-  - id: build
-    name: build
-    entry: luarocks build --no-install
-    language: system
-    pass_filenames: false
-  - id: busted
-    name: busted
-    entry: bash -c "busted || false"
+  - id: make-test
+    name: make test
+    entry: make test
     language: system
     pass_filenames: false
 - repo: meta
