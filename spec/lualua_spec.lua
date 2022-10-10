@@ -31,7 +31,7 @@ describe('lualua', function()
       assert.Not.Nil(lib.newstate)
       for k, v in pairs(lib) do
         assert.same('string', type(k))
-        assert.same(k == 'newstate' and 'function' or 'number', type(v))
+        assert.same(k == 'newstate' and 'function' or k == 'iselune' and 'boolean' or 'number', type(v))
       end
     end)
 
@@ -349,6 +349,13 @@ describe('lualua', function()
         s:pushnumber(42)
         assertFails('invalid index', s.insert, s, lib.ENVIRONINDEX)
       end)
+      if lib.iselune then
+        it('fails on error handler pseudo-index', function()
+          local s = lib.newstate()
+          s:pushnumber(42)
+          assertFails('invalid index', s.insert, s, lib.ERRORHANDLERINDEX)
+        end)
+      end
     end)
 
     describe('isnil', function()
@@ -880,6 +887,13 @@ describe('lualua', function()
         s:pushnumber(42)
         assertFails('invalid index', s.remove, s, lib.ENVIRONINDEX)
       end)
+      if lib.iselune then
+        it('fails on error handler pseudo-index', function()
+          local s = lib.newstate()
+          s:pushnumber(42)
+          assertFails('invalid index', s.remove, s, lib.ERRORHANDLERINDEX)
+        end)
+      end
     end)
 
     describe('setfield', function()

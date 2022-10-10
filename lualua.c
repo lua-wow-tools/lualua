@@ -1,6 +1,10 @@
 #include <lauxlib.h>
 #include <lua.h>
 
+#ifdef ELUNE_VERSION
+#define LUALUA_IS_ELUNE
+#endif
+
 typedef struct {
   lua_State *state;
   int stackmax;
@@ -44,6 +48,9 @@ static int lualua_isacceptablestackindex(lualua_State *S, int index) {
 
 static int lualua_ispseudoindex(int index) {
   return index == LUA_GLOBALSINDEX || index == LUA_REGISTRYINDEX ||
+#ifdef LUALUA_IS_ELUNE
+         index == LUA_ERRORHANDLERINDEX ||
+#endif
          index == LUA_ENVIRONINDEX;
 }
 
@@ -571,6 +578,9 @@ static const lualua_Constant lualua_constants[] = {
     {"TTABLE", LUA_TTABLE},
     {"TTHREAD", LUA_TTHREAD},
     {"TUSERDATA", LUA_TUSERDATA},
+#ifdef LUALUA_IS_ELUNE
+    {"ERRORHANDLERINDEX", LUA_ERRORHANDLERINDEX},
+#endif
     {NULL, 0},
 };
 
@@ -595,5 +605,12 @@ int luaopen_lualua(lua_State *L) {
     lua_pushinteger(L, c->value);
     lua_settable(L, -3);
   }
+  lua_pushstring(L, "iselune");
+#ifdef LUALUA_IS_ELUNE
+  lua_pushboolean(L, 1);
+#else
+  lua_pushboolean(L, 0);
+#endif
+  lua_settable(L, -3);
   return 1;
 }
