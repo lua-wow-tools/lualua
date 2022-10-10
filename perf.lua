@@ -2,12 +2,10 @@ local lib = require('lualua')
 local n = arg[1] or 1000000
 
 local checks = {
-  ['lualua pcall'] = function()
-    local s = lib.newstate()
-    s:loadstring('return')
+  ['lua call'] = function()
+    local function f() end
     for _ = 1, n do
-      s:pushvalue(-1)
-      s:pcall(0, 0, 0)
+      f()
     end
   end,
   ['lua pcall'] = function()
@@ -24,10 +22,19 @@ local checks = {
       s:call(0, 0)
     end
   end,
-  ['lua call'] = function()
-    local function f() end
+  ['lualua pcall'] = function()
+    local s = lib.newstate()
+    s:loadstring('return')
     for _ = 1, n do
-      f()
+      s:pushvalue(-1)
+      s:pcall(0, 0, 0)
+    end
+  end,
+  ['lualua stack twiddle'] = function()
+    local s = lib.newstate()
+    for _ = 1, n do
+      s:pushnil()
+      s:pop(1)
     end
   end,
 }
