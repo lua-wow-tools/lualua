@@ -35,11 +35,18 @@ static lualua_State *lualua_checkstate(lua_State *L, int index) {
   return luaL_checkudata(L, index, lualua_state_metatable);
 }
 
-static int lualua_isacceptableindex(lualua_State *S, int index) {
+static int lualua_isacceptablestackindex(lualua_State *S, int index) {
   return (index > 0 && index <= S->stackmax) ||
-         (index < 0 && -index <= lua_gettop(S->state)) ||
-         index == LUA_GLOBALSINDEX || index == LUA_REGISTRYINDEX ||
+         (index < 0 && -index <= lua_gettop(S->state));
+}
+
+static int lualua_ispseudoindex(int index) {
+  return index == LUA_GLOBALSINDEX || index == LUA_REGISTRYINDEX ||
          index == LUA_ENVIRONINDEX;
+}
+
+static int lualua_isacceptableindex(lualua_State *S, int index) {
+  return lualua_isacceptablestackindex(S, index) || lualua_ispseudoindex(index);
 }
 
 static void lualua_assert(lualua_State *S, int cond, const char *msg) {
@@ -53,6 +60,13 @@ static int lualua_checkacceptableindex(lua_State *L, int index,
                                        lualua_State *S) {
   int k = luaL_checkint(L, index);
   lualua_assert(S, lualua_isacceptableindex(S, k), "invalid index");
+  return k;
+}
+
+static int lualua_checkacceptablestackindex(lua_State *L, int index,
+                                            lualua_State *S) {
+  int k = luaL_checkint(L, index);
+  lualua_assert(S, lualua_isacceptablestackindex(S, k), "invalid index");
   return k;
 }
 
@@ -137,6 +151,13 @@ static int lualua_gettop(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   lua_pushnumber(L, lua_gettop(S->state));
   return 1;
+}
+
+static int lualua_insert(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptablestackindex(L, 2, S);
+  lua_insert(S->state, index);
+  return 0;
 }
 
 static int lualua_isboolean(lua_State *L) {
@@ -409,6 +430,13 @@ static int lualua_ref(lua_State *L) {
   return 1;
 }
 
+static int lualua_remove(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptablestackindex(L, 2, S);
+  lua_remove(S->state, index);
+  return 0;
+}
+
 static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -494,6 +522,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"getmetatable", lualua_getmetatable},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
+    {"insert", lualua_insert},
     {"isboolean", lualua_isboolean},
     {"iscfunction", lualua_iscfunction},
     {"isfunction", lualua_isfunction},
@@ -519,6 +548,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pushvalue", lualua_pushvalue},
     {"rawgeti", lualua_rawgeti},
     {"ref", lualua_ref},
+    {"remove", lualua_remove},
     {"setfield", lualua_setfield},
     {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},
