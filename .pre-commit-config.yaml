@@ -24,12 +24,12 @@ repos:
   hooks:
   - id: luacheck
     name: luacheck
-    entry: luacheck
+    entry: /opt/lua-5.1.5/bin/luacheck
     language: system
     types: [lua]
   - id: luarocks-lint
     name: luarocks lint
-    entry: luarocks lint
+    entry: /opt/lua-5.1.5/bin/luarocks lint
     files: .*\.rockspec
     language: system
   - id: make-test

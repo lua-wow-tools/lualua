@@ -10,8 +10,11 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         python3-dev \
     && python3 -m pip install \
         'cmake>=3.22' \
-        git+https://github.com/luarocks/hererocks \
+        git+https://github.com/lua-wow-tools/hererocks \
         ninja \
-    && hererocks -l 5.1 -r 3.8.0 --cflags=-DLUA_USE_APICHECK /usr/local \
-    && echo busted luacheck | xargs -n1 luarocks install
+    && hererocks -l 5.1 -r 3.8.0 --cflags=-DLUA_USE_APICHECK /opt/lua-5.1.5 \
+    && /opt/lua-5.1.5/bin/luarocks install busted \
+    && /opt/lua-5.1.5/bin/luarocks install luacheck \
+    && hererocks --elune @12a94e702e0e2d3af99cd6065252055d20bbe5f9 -r 3.8.0 /opt/elune \
+    && /opt/elune/bin/luarocks install busted
 COPY --from=stylua-builder /opt/stylua /usr/local

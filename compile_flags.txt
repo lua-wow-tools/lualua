@@ -1,1 +1,2 @@
 -Wall
+-I/opt/lua-5.1.5/include
