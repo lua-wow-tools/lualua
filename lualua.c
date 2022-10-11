@@ -327,7 +327,7 @@ static int lualua_newuserdata(lua_State *L) {
 static int lualua_next(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_assert(S, lua_type(S->state, index) == LUA_TTABLE, "type error");
   lualua_checkoverflow(S, 1);
   int value = lua_next(S->state, index);
   lua_pushboolean(L, value);
@@ -502,7 +502,7 @@ static int lualua_rawequal(lua_State *L) {
 static int lualua_rawget(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_assert(S, lua_type(S->state, index) == LUA_TTABLE, "type error");
   lua_rawget(S->state, index);
   return 0;
 }
@@ -511,7 +511,7 @@ static int lualua_rawgeti(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   int n = luaL_checkint(L, 3);
-  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_assert(S, lua_type(S->state, index) == LUA_TTABLE, "type error");
   lualua_checkoverflow(S, 1);
   lua_rawgeti(S->state, index, n);
   return 0;
@@ -520,7 +520,7 @@ static int lualua_rawgeti(lua_State *L) {
 static int lualua_rawset(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_assert(S, lua_type(S->state, index) == LUA_TTABLE, "type error");
   lualua_checkunderflow(S, 2);
   lua_rawset(S->state, index);
   return 0;
@@ -530,7 +530,7 @@ static int lualua_rawseti(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   int n = luaL_checkint(L, 3);
-  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_assert(S, lua_type(S->state, index) == LUA_TTABLE, "type error");
   lualua_checkunderflow(S, 1);
   lua_rawseti(S->state, index, n);
   return 0;
@@ -539,7 +539,7 @@ static int lualua_rawseti(lua_State *L) {
 static int lualua_ref(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_assert(S, lua_type(S->state, index) == LUA_TTABLE, "type error");
   lualua_checkunderflow(S, 1);
   int ref = luaL_ref(S->state, index);
   lua_pushnumber(L, ref);
