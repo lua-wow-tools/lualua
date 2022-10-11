@@ -34,7 +34,7 @@ API coverage:
 | `lua_call` | `s:call(nargs, nresults)` |
 | `lua_checkstack` | `b = s:checkstack(extra)` |
 | `lua_close` | Implicitly called when sandbox is GCed |
-| `lua_concat` | Not supported |
+| `lua_concat` | `s:concat(n)` |
 | `lua_cpcall` | Not supported |
 | `lua_createtable` | Not supported |
 | `lua_dump` | Not supported |
