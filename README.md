@@ -95,7 +95,7 @@ API coverage:
 | `lua_replace` | `s:replace(index)` |
 | `lua_resume` | Not supported |
 | `lua_setallocf` | Not supported |
-| `lua_setfenv` | Not supported |
+| `lua_setfenv` | `b = s:setfenv(index)` |
 | `lua_setfield` | `s:setfield(index, k)` |
 | `lua_setglobal` | `s:setglobal(name)` |
 | `lua_setmetatable` | `b = s:setmetatable(index)` |

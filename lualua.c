@@ -560,6 +560,16 @@ static int lualua_replace(lua_State *L) {
   return 0;
 }
 
+static int lualua_setfenv(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  lualua_checkunderflow(S, 1);
+  lualua_assert(S, lua_type(S->state, -1) == LUA_TTABLE, "type error");
+  int value = lua_setfenv(S->state, index);
+  lua_pushboolean(L, value);
+  return 1;
+}
+
 static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -691,6 +701,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"ref", lualua_ref},
     {"remove", lualua_remove},
     {"replace", lualua_replace},
+    {"setfenv", lualua_setfenv},
     {"setfield", lualua_setfield},
     {"setglobal", lualua_setglobal},
     {"setmetatable", lualua_setmetatable},
