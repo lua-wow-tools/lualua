@@ -137,6 +137,14 @@ static int lualua_error(lua_State *L) {
   return lua_error(S->state);
 }
 
+static int lualua_getfenv(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  lualua_checkoverflow(S, 1);
+  lua_getfenv(S->state, index);
+  return 0;
+}
+
 static int lualua_getfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -642,6 +650,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"concat", lualua_concat},
     {"equal", lualua_equal},
     {"error", lualua_error},
+    {"getfenv", lualua_getfenv},
     {"getfield", lualua_getfield},
     {"getglobal", lualua_getglobal},
     {"getmetatable", lualua_getmetatable},

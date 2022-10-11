@@ -42,7 +42,7 @@ API coverage:
 | `lua_error` | `s:error()` |
 | `lua_gc` | Not supported |
 | `lua_getallocf` | Not supported |
-| `lua_getfenv` | Not supported |
+| `lua_getfenv` | `s:getfenv(index)` |
 | `lua_getfield` | `s:getfield(index, k)` |
 | `lua_getglobal` | `s:getglobal(name)` |
 | `lua_getmetatable` | `b = s:getmetatable(index)` |
