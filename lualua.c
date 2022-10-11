@@ -1,10 +1,14 @@
 #include <lauxlib.h>
 #include <lua.h>
 
+#ifdef ELUNE_VERSION
+#define LUALUA_IS_ELUNE
+#endif
+
 typedef struct {
   lua_State *state;
   int stackmax;
-  int hostuserdataref;
+  int stateowner;
 } lualua_State;
 
 static const char lualua_state_metatable[] = "lualua state";
@@ -21,15 +25,13 @@ static int lualua_newstate(lua_State *L) {
   lualua_State *p = lua_newuserdata(L, sizeof(*p));
   luaL_getmetatable(L, lualua_state_metatable);
   lua_setmetatable(L, -2);
-  lua_pushvalue(L, -1);
-  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
   lua_State *SS = luaL_newstate();
   lua_pushlightuserdata(SS, L);
   lua_setfield(SS, LUA_REGISTRYINDEX, "lualuahost");
   lua_atpanic(SS, lualua_atpanic);
   p->state = SS;
   p->stackmax = LUA_MINSTACK;
-  p->hostuserdataref = ref;
+  p->stateowner = 1;
   return 1;
 }
 
@@ -37,11 +39,21 @@ static lualua_State *lualua_checkstate(lua_State *L, int index) {
   return luaL_checkudata(L, index, lualua_state_metatable);
 }
 
-static int lualua_isacceptableindex(lualua_State *S, int index) {
+static int lualua_isacceptablestackindex(lualua_State *S, int index) {
   return (index > 0 && index <= S->stackmax) ||
-         (index < 0 && -index <= lua_gettop(S->state)) ||
-         index == LUA_GLOBALSINDEX || index == LUA_REGISTRYINDEX ||
+         (index < 0 && -index <= lua_gettop(S->state));
+}
+
+static int lualua_ispseudoindex(int index) {
+  return index == LUA_GLOBALSINDEX || index == LUA_REGISTRYINDEX ||
+#ifdef LUALUA_IS_ELUNE
+         index == LUA_ERRORHANDLERINDEX ||
+#endif
          index == LUA_ENVIRONINDEX;
+}
+
+static int lualua_isacceptableindex(lualua_State *S, int index) {
+  return lualua_isacceptablestackindex(S, index) || lualua_ispseudoindex(index);
 }
 
 static void lualua_assert(lualua_State *S, int cond, const char *msg) {
@@ -58,6 +70,13 @@ static int lualua_checkacceptableindex(lua_State *L, int index,
   return k;
 }
 
+static int lualua_checkacceptablestackindex(lua_State *L, int index,
+                                            lualua_State *S) {
+  int k = luaL_checkint(L, index);
+  lualua_assert(S, lualua_isacceptablestackindex(S, k), "invalid index");
+  return k;
+}
+
 static void lualua_checkoverflow(lualua_State *S, int space) {
   lualua_assert(S, S->stackmax - lua_gettop(S->state) >= space,
                 "stack overflow");
@@ -69,8 +88,9 @@ static void lualua_checkunderflow(lualua_State *S, int space) {
 
 static int lualua_state_gc(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lua_close(S->state);
-  luaL_unref(L, LUA_REGISTRYINDEX, S->hostuserdataref);
+  if (S->stateowner) {
+    lua_close(S->state);
+  }
   return 0;
 }
 
@@ -138,6 +158,13 @@ static int lualua_gettop(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   lua_pushnumber(L, lua_gettop(S->state));
   return 1;
+}
+
+static int lualua_insert(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptablestackindex(L, 2, S);
+  lua_insert(S->state, index);
+  return 0;
 }
 
 static int lualua_isboolean(lua_State *L) {
@@ -264,16 +291,64 @@ static int lualua_newuserdata(lua_State *L) {
   return 1;
 }
 
+typedef struct {
+  lua_State *state;
+  int nargs;
+  int nresults;
+} lualua_Call;
+
+static int lualua_docall(lua_State *L) {
+  lualua_Call *call = lua_touserdata(L, 1);
+  lua_call(call->state, call->nargs, call->nresults);
+  return 0;
+}
+
+static int lualua_docpcall(lua_State *L, lua_State *S, int nargs,
+                           int nresults) {
+  lualua_Call call = {S, nargs, nresults};
+  return lua_cpcall(L, lualua_docall, &call);
+}
+
 static int lualua_pcall(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
   int errfunc = luaL_checkint(L, 4);
-  lualua_assert(S, errfunc == 0 || lualua_isacceptableindex(S, errfunc),
-                "invalid index");
+  if (errfunc != 0) {
+    lualua_assert(S, lualua_isacceptableindex(S, errfunc), "invalid index");
+    errfunc = errfunc >= 0 ? errfunc : lua_gettop(S->state) + errfunc + 1;
+  }
   lualua_checkunderflow(S, nargs + 1);
-  int result = lua_pcall(S->state, nargs, nresults, errfunc);
-  lua_pushnumber(L, result);
+  lualua_checkoverflow(S, 1);
+  lua_State *T = lua_newthread(S->state);
+  lua_insert(S->state, -nargs - 2);
+  lua_xmove(S->state, T, nargs + 1);
+  int result = lualua_docpcall(L, T, nargs, nresults);
+  if (result == 0) {
+    int nr = lua_gettop(T);
+    lua_xmove(T, S->state, nr);
+    lua_remove(S->state, -nr - 1);
+  } else if (errfunc == 0) {
+    lua_pop(S->state, 1);
+    lua_pushstring(S->state, lua_tostring(L, -1));
+  } else if (lua_type(S->state, errfunc) != LUA_TFUNCTION) {
+    lua_pop(S->state, 1);
+    lua_pushstring(S->state, "errfunc error");
+    result = LUA_ERRERR;
+  } else {
+    lua_pushvalue(S->state, errfunc);
+    lua_xmove(S->state, T, 1);
+    lua_pushstring(T, lua_tostring(L, -1));
+    if (lualua_docpcall(L, T, 1, 1) != 0) {
+      lua_pop(S->state, 1);
+      lua_pushstring(S->state, "errfunc error");
+      result = LUA_ERRERR;
+    } else {
+      lua_xmove(T, S->state, 1);
+      lua_remove(S->state, -2);
+    }
+  }
+  lua_pushinteger(L, result);
   return 1;
 }
 
@@ -296,14 +371,20 @@ static int lualua_pushboolean(lua_State *L) {
 }
 
 static int lualua_invokefromhostregistry(lua_State *SS) {
-  lualua_State *S = lua_touserdata(SS, lua_upvalueindex(1));
-  int hostfunref = lua_tonumber(SS, lua_upvalueindex(2));
+  int hostfunref = lua_tonumber(SS, lua_upvalueindex(1));
   lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
   lua_State *L = lua_touserdata(SS, -1);
   lua_pop(SS, 1);
-  lua_checkstack(L, 2);
+  if (!lua_checkstack(L, 3)) {
+    return luaL_error(SS, "host stack overflow");
+  }
   lua_rawgeti(L, LUA_REGISTRYINDEX, hostfunref);
-  lua_rawgeti(L, LUA_REGISTRYINDEX, S->hostuserdataref);
+  lualua_State *p = lua_newuserdata(L, sizeof(*p));
+  luaL_getmetatable(L, lualua_state_metatable);
+  lua_setmetatable(L, -2);
+  p->state = SS;
+  p->stackmax = LUA_MINSTACK;
+  p->stateowner = 0;
   int value = lua_pcall(L, 1, 1, 0);
   if (value != 0) {
     lua_pushstring(SS, lua_tostring(L, -1));
@@ -322,9 +403,8 @@ static int lualua_pushlfunction(lua_State *L) {
   lua_settop(L, 2);
   lualua_checkoverflow(S, 2);
   int hostfunref = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
-  lua_pushlightuserdata(S->state, S);
   lua_pushnumber(S->state, hostfunref);
-  lua_pushcclosure(S->state, lualua_invokefromhostregistry, 2);
+  lua_pushcclosure(S->state, lualua_invokefromhostregistry, 1);
   return 0;
 }
 
@@ -377,6 +457,13 @@ static int lualua_ref(lua_State *L) {
   int ref = luaL_ref(S->state, index);
   lua_pushnumber(L, ref);
   return 1;
+}
+
+static int lualua_remove(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptablestackindex(L, 2, S);
+  lua_remove(S->state, index);
+  return 0;
 }
 
 static int lualua_setfield(lua_State *L) {
@@ -464,6 +551,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"getmetatable", lualua_getmetatable},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
+    {"insert", lualua_insert},
     {"isboolean", lualua_isboolean},
     {"iscfunction", lualua_iscfunction},
     {"isfunction", lualua_isfunction},
@@ -489,6 +577,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pushvalue", lualua_pushvalue},
     {"rawgeti", lualua_rawgeti},
     {"ref", lualua_ref},
+    {"remove", lualua_remove},
     {"setfield", lualua_setfield},
     {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},
@@ -541,6 +630,9 @@ static const lualua_Constant lualua_constants[] = {
     {"TTABLE", LUA_TTABLE},
     {"TTHREAD", LUA_TTHREAD},
     {"TUSERDATA", LUA_TUSERDATA},
+#ifdef LUALUA_IS_ELUNE
+    {"ERRORHANDLERINDEX", LUA_ERRORHANDLERINDEX},
+#endif
     {NULL, 0},
 };
 
@@ -565,5 +657,12 @@ int luaopen_lualua(lua_State *L) {
     lua_pushinteger(L, c->value);
     lua_settable(L, -3);
   }
+  lua_pushstring(L, "iselune");
+#ifdef LUALUA_IS_ELUNE
+  lua_pushboolean(L, 1);
+#else
+  lua_pushboolean(L, 0);
+#endif
+  lua_settable(L, -3);
   return 1;
 }
