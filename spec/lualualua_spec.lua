@@ -4,7 +4,11 @@ describe('lualualua', function()
     s:loadstring([[
       local lib = ...
       local s = lib.newstate()
-      return s:gettop() < lib.MINSTACK
+      s:pushnumber(42)
+      s:pushstring(',')
+      s:pushnumber(99)
+      s:concat(3)
+      return s:tostring(1)
     ]])
     s:pushcfunction(require('lualualua'))
     if s:pcall(0, 1, 0) ~= 0 then
@@ -13,6 +17,6 @@ describe('lualualua', function()
     if s:pcall(1, 1, 0) ~= 0 then
       error(s:tostring(-1))
     end
-    assert.same(true, s:toboolean(1))
+    assert.same('42,99', s:tostring(1))
   end)
 end)
