@@ -85,7 +85,7 @@ API coverage:
 | `lua_pushthread` | Not supported |
 | `lua_pushvalue` | `s:pushvalue(index)` |
 | `lua_pushvfstring` | Not supported |
-| `lua_rawequal` | Not supported |
+| `lua_rawequal` | `b = s:rawequal(index1, index2)` |
 | `lua_rawget` | Not supported |
 | `lua_rawgeti` | `s:rawgeti(index, n)` |
 | `lua_rawset` | Not supported |
