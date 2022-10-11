@@ -68,7 +68,7 @@ API coverage:
 | `lua_newthread` | Not supported |
 | `lua_newuserdata` | `t = s:newuserdata()` |
 | `lua_next` | Not supported |
-| `lua_objlen` | Not supported |
+| `lua_objlen` | `n = s:objlen(index)` |
 | `lua_pcall` | `n = s:pcall(nargs, nresults, errfunc)` |
 | `lua_pop` | `s:pop(n)` |
 | `lua_pushboolean` | `s:pushboolean(b)` |

@@ -316,6 +316,14 @@ static int lualua_newuserdata(lua_State *L) {
   return 1;
 }
 
+static int lualua_objlen(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int value = lua_objlen(S->state, index);
+  lua_pushinteger(L, value);
+  return 1;
+}
+
 typedef struct {
   lua_State *state;
   int nargs;
@@ -646,6 +654,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"loadstring", lualua_loadstring},
     {"newtable", lualua_newtable},
     {"newuserdata", lualua_newuserdata},
+    {"objlen", lualua_objlen},
     {"pcall", lualua_pcall},
     {"pop", lualua_pop},
     {"pushboolean", lualua_pushboolean},
