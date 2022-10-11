@@ -65,7 +65,7 @@ API coverage:
 | `lua_load` | Not supported |
 | `lua_newstate` | `require('lualua').newstate()` |
 | `lua_newtable` | `s:newtable()` |
-| `lua_newthread` | Not supported |
+| `lua_newthread` | `th = s:newthread()` |
 | `lua_newuserdata` | `t = s:newuserdata()` |
 | `lua_next` | `b = s:next(index)` |
 | `lua_objlen` | `n = s:objlen(index)` |
