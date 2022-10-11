@@ -323,6 +323,13 @@ static int lualua_newtable(lua_State *L) {
   return 0;
 }
 
+static int lualua_newthread(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  lualua_checkoverflow(S, 1);
+  lua_newthread(S->state);
+  return 1;
+}
+
 static int lualua_newuserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   lualua_checkoverflow(S, 1);
@@ -706,6 +713,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"lessthan", lualua_lessthan},
     {"loadstring", lualua_loadstring},
     {"newtable", lualua_newtable},
+    {"newthread", lualua_newthread},
     {"newuserdata", lualua_newuserdata},
     {"next", lualua_next},
     {"objlen", lualua_objlen},

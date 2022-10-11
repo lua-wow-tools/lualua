@@ -661,6 +661,21 @@ describe('lualua', function()
       end)
     end)
 
+    describe('newthread', function()
+      it('works', function()
+        local s = lib.newstate()
+        nr(1, s:newthread())
+        assert(true, s:isthread(1))
+      end)
+      it('fails on full stack', function()
+        local s = lib.newstate()
+        for _ = 1, lib.MINSTACK do
+          nr(1, s:newthread())
+        end
+        assertFails('stack overflow', s.newthread, s)
+      end)
+    end)
+
     describe('newuserdata', function()
       it('works', function()
         local s = lib.newstate()
