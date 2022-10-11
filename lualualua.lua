@@ -76,11 +76,9 @@ local stateindex = {
 local libindex = {
   newstate = function(s)
     local t = s:newuserdata()
+    t.state = lualua.newstate()
     s:getfield(lualua.REGISTRYINDEX, 'lualua state')
     s:setmetatable(-2)
-    s:pushvalue(-1)
-    t.ref = s:ref(lualua.REGISTRYINDEX)
-    t.state = lualua.newstate()
     return 1
   end,
 }
