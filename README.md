@@ -88,7 +88,7 @@ API coverage:
 | `lua_rawequal` | `b = s:rawequal(index1, index2)` |
 | `lua_rawget` | `s:rawget(index)` |
 | `lua_rawgeti` | `s:rawgeti(index, n)` |
-| `lua_rawset` | Not supported |
+| `lua_rawset` | `s:rawset(index)` |
 | `lua_rawseti` | `s:rawseti(index, n)` |
 | `lua_register` | Not supported |
 | `lua_remove` | `s:remove(index)` |
