@@ -483,6 +483,16 @@ static int lualua_rawgeti(lua_State *L) {
   return 0;
 }
 
+static int lualua_rawseti(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  int n = luaL_checkint(L, 3);
+  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_checkunderflow(S, 1);
+  lua_rawseti(S->state, index, n);
+  return 0;
+}
+
 static int lualua_ref(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -629,6 +639,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pushvalue", lualua_pushvalue},
     {"rawequal", lualua_rawequal},
     {"rawgeti", lualua_rawgeti},
+    {"rawseti", lualua_rawseti},
     {"ref", lualua_ref},
     {"remove", lualua_remove},
     {"replace", lualua_replace},
