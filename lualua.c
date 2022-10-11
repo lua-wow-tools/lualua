@@ -484,6 +484,13 @@ static int lualua_remove(lua_State *L) {
   return 0;
 }
 
+static int lualua_replace(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptablestackindex(L, 2, S);
+  lua_replace(S->state, index);
+  return 0;
+}
+
 static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -598,6 +605,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"rawgeti", lualua_rawgeti},
     {"ref", lualua_ref},
     {"remove", lualua_remove},
+    {"replace", lualua_replace},
     {"setfield", lualua_setfield},
     {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},

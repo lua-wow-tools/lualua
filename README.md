@@ -92,7 +92,7 @@ API coverage:
 | `lua_rawseti` | Not supported |
 | `lua_register` | Not supported |
 | `lua_remove` | `s:remove(index)` |
-| `lua_replace` | Not supported |
+| `lua_replace` | `s:replace(index)` |
 | `lua_resume` | Not supported |
 | `lua_setallocf` | Not supported |
 | `lua_setfenv` | Not supported |
