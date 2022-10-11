@@ -316,6 +316,16 @@ static int lualua_newuserdata(lua_State *L) {
   return 1;
 }
 
+static int lualua_next(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  luaL_checktype(S->state, index, LUA_TTABLE);
+  lualua_checkoverflow(S, 1);
+  int value = lua_next(S->state, index);
+  lua_pushboolean(L, value);
+  return 1;
+}
+
 static int lualua_objlen(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -654,6 +664,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"loadstring", lualua_loadstring},
     {"newtable", lualua_newtable},
     {"newuserdata", lualua_newuserdata},
+    {"next", lualua_next},
     {"objlen", lualua_objlen},
     {"pcall", lualua_pcall},
     {"pop", lualua_pop},

@@ -67,7 +67,7 @@ API coverage:
 | `lua_newtable` | `s:newtable()` |
 | `lua_newthread` | Not supported |
 | `lua_newuserdata` | `t = s:newuserdata()` |
-| `lua_next` | Not supported |
+| `lua_next` | `b = s:next(index)` |
 | `lua_objlen` | `n = s:objlen(index)` |
 | `lua_pcall` | `n = s:pcall(nargs, nresults, errfunc)` |
 | `lua_pop` | `s:pop(n)` |
