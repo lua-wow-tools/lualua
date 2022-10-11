@@ -6,7 +6,7 @@ describe('lualualua', function()
       local s = lib.newstate()
       return s:gettop() < lib.MINSTACK
     ]])
-    s:pushlfunction(require('lualualua'))
+    s:pushcfunction(require('lualualua'))
     if s:pcall(0, 1, 0) ~= 0 then
       error(s:tostring(-1))
     end

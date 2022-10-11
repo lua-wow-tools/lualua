@@ -16,7 +16,7 @@ end
 local function register(s, t)
   for k, v in pairs(t) do
     s:pushstring(k)
-    s:pushlfunction(v)
+    s:pushcfunction(v)
     s:settable(-3)
   end
 end
