@@ -1307,6 +1307,27 @@ describe('lualua', function()
       end)
     end)
 
+    describe('register', function()
+      it('works', function()
+        local s = lib.newstate()
+        local fn = function(ss)
+          ss:pushnumber(42)
+          return 1
+        end
+        nr(0, s:register('foo', fn))
+        assert.same(0, s:gettop())
+        s:getglobal('foo')
+        assert.same(true, s:iscfunction(1))
+      end)
+      it('fails on full stack', function()
+        local s = lib.newstate()
+        for _ = 1, lib.MINSTACK do
+          s:pushnil()
+        end
+        assertFails('stack overflow', s.register, s, 'foo', function() end)
+      end)
+    end)
+
     describe('remove', function()
       it('fails on empty stack', function()
         local s = lib.newstate()

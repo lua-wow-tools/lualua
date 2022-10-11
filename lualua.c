@@ -457,14 +457,18 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
   }
 }
 
-static int lualua_pushcfunction(lua_State *L) {
-  lualua_State *S = lualua_checkstate(L, 1);
-  luaL_argcheck(L, lua_isfunction(L, 2), 2, "function expected");
-  lua_settop(L, 2);
+static void lualua_dopushcfunction(lua_State *L, lualua_State *S) {
   lualua_checkoverflow(S, 2);
   int hostfunref = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
   lua_pushnumber(S->state, hostfunref);
   lua_pushcclosure(S->state, lualua_invokefromhostregistry, 1);
+}
+
+static int lualua_pushcfunction(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  luaL_argcheck(L, lua_isfunction(L, 2), 2, "function expected");
+  lua_settop(L, 2);
+  lualua_dopushcfunction(L, S);
   return 0;
 }
 
@@ -553,6 +557,16 @@ static int lualua_ref(lua_State *L) {
   int ref = luaL_ref(S->state, index);
   lua_pushnumber(L, ref);
   return 1;
+}
+
+static int lualua_register(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  const char *name = luaL_checkstring(L, 2);
+  luaL_argcheck(L, lua_isfunction(L, 3), 3, "function expected");
+  lua_settop(L, 3);
+  lualua_dopushcfunction(L, S);
+  lua_setglobal(S->state, name);
+  return 0;
 }
 
 static int lualua_remove(lua_State *L) {
@@ -709,6 +723,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"rawset", lualua_rawset},
     {"rawseti", lualua_rawseti},
     {"ref", lualua_ref},
+    {"register", lualua_register},
     {"remove", lualua_remove},
     {"replace", lualua_replace},
     {"setfenv", lualua_setfenv},

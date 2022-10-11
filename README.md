@@ -90,7 +90,7 @@ API coverage:
 | `lua_rawgeti` | `s:rawgeti(index, n)` |
 | `lua_rawset` | `s:rawset(index)` |
 | `lua_rawseti` | `s:rawseti(index, n)` |
-| `lua_register` | Not supported |
+| `lua_register` | `s:register(name, fn)` |
 | `lua_remove` | `s:remove(index)` |
 | `lua_replace` | `s:replace(index)` |
 | `lua_resume` | Not supported |
