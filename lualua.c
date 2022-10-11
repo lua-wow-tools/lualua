@@ -146,6 +146,14 @@ static int lualua_getfield(lua_State *L) {
   return 0;
 }
 
+static int lualua_getglobal(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  const char *k = luaL_checkstring(L, 2);
+  lualua_checkoverflow(S, 1);
+  lua_getglobal(S->state, k);
+  return 0;
+}
+
 static int lualua_getmetatable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -507,6 +515,14 @@ static int lualua_setfield(lua_State *L) {
   return 0;
 }
 
+static int lualua_setglobal(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  const char *k = luaL_checkstring(L, 2);
+  lualua_checkunderflow(S, 1);
+  lua_setglobal(S->state, k);
+  return 0;
+}
+
 static int lualua_setmetatable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
@@ -582,6 +598,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"equal", lualua_equal},
     {"error", lualua_error},
     {"getfield", lualua_getfield},
+    {"getglobal", lualua_getglobal},
     {"getmetatable", lualua_getmetatable},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
@@ -616,6 +633,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"remove", lualua_remove},
     {"replace", lualua_replace},
     {"setfield", lualua_setfield},
+    {"setglobal", lualua_setglobal},
     {"setmetatable", lualua_setmetatable},
     {"settable", lualua_settable},
     {"settop", lualua_settop},

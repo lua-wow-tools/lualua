@@ -44,7 +44,7 @@ API coverage:
 | `lua_getallocf` | Not supported |
 | `lua_getfenv` | Not supported |
 | `lua_getfield` | `s:getfield(index, k)` |
-| `lua_getglobal` | Not supported |
+| `lua_getglobal` | `s:getglobal(name)` |
 | `lua_getmetatable` | `b = s:getmetatable(index)` |
 | `lua_gettable` | `s:gettable(index)` |
 | `lua_gettop` | `n = s:gettop()` |
@@ -97,7 +97,7 @@ API coverage:
 | `lua_setallocf` | Not supported |
 | `lua_setfenv` | Not supported |
 | `lua_setfield` | `s:setfield(index, k)` |
-| `lua_setglobal` | Not supported |
+| `lua_setglobal` | `s:setglobal(name)` |
 | `lua_setmetatable` | `b = s:setmetatable(index)` |
 | `lua_settable` | `s:settable(index)` |
 | `lua_settop` | `s:settop(index)` |
