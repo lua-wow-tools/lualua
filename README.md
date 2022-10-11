@@ -36,7 +36,7 @@ API coverage:
 | `lua_close` | Implicitly called when sandbox is GCed |
 | `lua_concat` | `s:concat(n)` |
 | `lua_cpcall` | Not supported |
-| `lua_createtable` | Not supported |
+| `lua_createtable` | `s:createtable(narr, nrec)` |
 | `lua_dump` | Not supported |
 | `lua_equal` | `b = s:equal(index1, index2)` |
 | `lua_error` | `s:error()` |
