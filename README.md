@@ -22,7 +22,7 @@ assert(sandbox:tonumber(-1) == 46)
 
 A few things of note:
 
-* `pushlfunction` provides a mechanism for the sandbox to call back into the host.
+* `pushcfunction` provides a mechanism for the sandbox to call back into the host.
 * `newuserdata` provides a userdata to the sandbox backed by a table in the host.
 * Misuse of the API throws errors in the host Lua and resets the sandbox stack.
 
@@ -73,7 +73,7 @@ API coverage:
 | `lua_pop` | `s:pop(n)` |
 | `lua_pushboolean` | `s:pushboolean(b)` |
 | `lua_pushcclosure` | Not supported |
-| `lua_pushcfunction` | See `s:pushlfunction(fn)` |
+| `lua_pushcfunction` | `s:pushcfunction(fn)` |
 | `lua_pushfstring` | Not supported |
 | `lua_pushinteger` | Not supported |
 | `lua_pushlightuserdata` | Not supported |

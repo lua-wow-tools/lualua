@@ -457,7 +457,7 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
   }
 }
 
-static int lualua_pushlfunction(lua_State *L) {
+static int lualua_pushcfunction(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   luaL_argcheck(L, lua_isfunction(L, 2), 2, "function expected");
   lua_settop(L, 2);
@@ -698,7 +698,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"pcall", lualua_pcall},
     {"pop", lualua_pop},
     {"pushboolean", lualua_pushboolean},
-    {"pushlfunction", lualua_pushlfunction},
+    {"pushcfunction", lualua_pushcfunction},
     {"pushnil", lualua_pushnil},
     {"pushnumber", lualua_pushnumber},
     {"pushstring", lualua_pushstring},
