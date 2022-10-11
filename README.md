@@ -61,7 +61,7 @@ API coverage:
 | `lua_istable` | `b = s:istable(index)` |
 | `lua_isthread` | `b = s:isthread(index)` |
 | `lua_isuserdata` | `b = s:isuserdata(index)` |
-| `lua_lessthan` | Not supported |
+| `lua_lessthan` | `b = s:lessthan(index1, index2)` |
 | `lua_load` | Not supported |
 | `lua_newstate` | `require('lualua').newstate()` |
 | `lua_newtable` | `s:newtable()` |

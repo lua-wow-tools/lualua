@@ -263,6 +263,15 @@ static int lualua_isuserdata(lua_State *L) {
   return 1;
 }
 
+static int lualua_lessthan(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index1 = lualua_checkacceptableindex(L, 2, S);
+  int index2 = lualua_checkacceptableindex(L, 3, S);
+  int value = lua_lessthan(S->state, index1, index2);
+  lua_pushboolean(L, value);
+  return 1;
+}
+
 static int lualua_loadstring(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   size_t sz;
@@ -573,6 +582,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"istable", lualua_istable},
     {"isthread", lualua_isthread},
     {"isuserdata", lualua_isuserdata},
+    {"lessthan", lualua_lessthan},
     {"loadstring", lualua_loadstring},
     {"newtable", lualua_newtable},
     {"newuserdata", lualua_newuserdata},
