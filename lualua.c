@@ -401,6 +401,12 @@ static int lualua_objlen(lua_State *L) {
   return 1;
 }
 
+static int lualua_openlibs(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  luaL_openlibs(S->state);
+  return 0;
+}
+
 typedef struct {
   lua_State *state;
   int nargs;
@@ -766,6 +772,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"newuserdata", lualua_newuserdata},
     {"next", lualua_next},
     {"objlen", lualua_objlen},
+    {"openlibs", lualua_openlibs},
     {"pcall", lualua_pcall},
     {"pop", lualua_pop},
     {"pushboolean", lualua_pushboolean},
