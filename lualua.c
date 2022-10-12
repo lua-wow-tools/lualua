@@ -356,6 +356,18 @@ static int lualua_newtable(lua_State *L) {
   return 0;
 }
 
+static void lualua_gctokenize(lua_State *SS, int ref) {
+  lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
+  lua_getfield(SS, -1, "gctokens");
+  lua_pushvalue(SS, -2);
+  int *token = lua_newuserdata(SS, sizeof(int));
+  *token = ref;
+  lua_getfield(SS, -4, "gctokenmt");
+  lua_setmetatable(SS, -2);
+  lua_settable(SS, -3);
+  lua_pop(SS, 2);
+}
+
 static int lualua_newuserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   lualua_checkoverflow(S, 6);
@@ -364,17 +376,8 @@ static int lualua_newuserdata(lua_State *L) {
   lua_pushvalue(L, -2);
   int ref = luaL_ref(L, -2);
   lua_pop(L, 1);
-  int *p = lua_newuserdata(S->state, sizeof(int));
-  *p = ref;
-  lua_getfield(S->state, LUA_REGISTRYINDEX, lualua_sandbox_refname);
-  lua_getfield(S->state, -1, "gctokens");
-  lua_pushvalue(S->state, -2);
-  int *token = lua_newuserdata(S->state, sizeof(int));
-  *token = ref;
-  lua_getfield(S->state, -4, "gctokenmt");
-  lua_setmetatable(S->state, -2);
-  lua_settable(S->state, -3);
-  lua_pop(S->state, 2);
+  *(int *)lua_newuserdata(S->state, sizeof(int)) = ref;
+  lualua_gctokenize(S->state, ref);
   return 1;
 }
 
@@ -509,9 +512,10 @@ static void lualua_dopushcfunction(lua_State *L, lualua_State *S) {
   lualua_checkoverflow(S, 2);
   lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
   lua_insert(L, -2);
-  int hostfunref = luaL_ref(L, -2); /* TODO unref */
+  int hostfunref = luaL_ref(L, -2);
   lua_pushnumber(S->state, hostfunref);
   lua_pushcclosure(S->state, lualua_invokefromhostregistry, 1);
+  lualua_gctokenize(S->state, hostfunref);
 }
 
 static int lualua_pushcfunction(lua_State *L) {
