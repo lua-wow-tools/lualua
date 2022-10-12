@@ -19,4 +19,29 @@ describe('lualualua', function()
     end
     assert.same('42,99', s:tostring(1))
   end)
+  it('runs lualua_spec.lua', function()
+    local lualuaspec = require('pl.file').read('spec/lualua_spec.lua')
+    local s = require('lualua').newstate()
+    s:loadstring('assert=require("luassert")')
+    s:call(0, 0)
+    s:loadstring(lualuaspec)
+    -- Emulate the busted environment in lualua.
+    s:pushcfunction(function(ss)
+      print('describe: ' .. ss:tostring(1))
+      ss:settop(2)
+      if ss:pcall(0, 0, 0) ~= 0 then
+        print('error:' .. ss:tostring(-1))
+      end
+    end)
+    s:setglobal('describe')
+    s:pushcfunction(function(ss)
+      print('it: ', ss:tostring(1))
+      ss:settop(2)
+      if ss:pcall(0, 0, 0) ~= 0 then
+        print('error:' .. ss:tostring(-1))
+      end
+    end)
+    s:setglobal('it')
+    s:call(0, 0)
+  end)
 end)
