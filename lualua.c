@@ -484,7 +484,9 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
   if (!lua_checkstack(L, 3)) {
     return luaL_error(SS, "host stack overflow");
   }
-  lua_rawgeti(L, LUA_REGISTRYINDEX, hostfunref);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  lua_rawgeti(L, -1, hostfunref);
+  lua_remove(L, -2);
   lualua_State *p = lua_newuserdata(L, sizeof(*p));
   luaL_getmetatable(L, lualua_state_metatable);
   lua_setmetatable(L, -2);
@@ -505,7 +507,9 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
 
 static void lualua_dopushcfunction(lua_State *L, lualua_State *S) {
   lualua_checkoverflow(S, 2);
-  int hostfunref = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  lua_insert(L, -2);
+  int hostfunref = luaL_ref(L, -2); /* TODO unref */
   lua_pushnumber(S->state, hostfunref);
   lua_pushcclosure(S->state, lualua_invokefromhostregistry, 1);
 }
