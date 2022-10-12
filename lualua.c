@@ -359,7 +359,7 @@ static int lualua_newtable(lua_State *L) {
 static void lualua_gctokenize(lua_State *SS, int ref) {
   lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
   lua_getfield(SS, -1, "gctokens");
-  lua_pushvalue(SS, -2);
+  lua_pushvalue(SS, -3);
   int *token = lua_newuserdata(SS, sizeof(int));
   *token = ref;
   lua_getfield(SS, -4, "gctokenmt");
