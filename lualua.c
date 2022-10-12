@@ -12,6 +12,7 @@ typedef struct {
 } lualua_State;
 
 static const char lualua_state_metatable[] = "lualua state";
+static const char lualua_gctoken_metatable[] = "lualua gctoken";
 
 static int lualua_atpanic(lua_State *SS) {
   lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
@@ -19,6 +20,14 @@ static int lualua_atpanic(lua_State *SS) {
   lua_pushstring(L, lua_tostring(SS, -2));
   lua_settop(SS, 0);
   return lua_error(L);
+}
+
+static int lualua_gctoken_gc(lua_State *SS) {
+  int ref = *(int *)lua_touserdata(SS, 1);
+  lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
+  lua_State *L = lua_touserdata(SS, -1);
+  luaL_unref(L, LUA_REGISTRYINDEX, ref);
+  return 0;
 }
 
 static int lualua_newstate(lua_State *L) {
@@ -29,6 +38,20 @@ static int lualua_newstate(lua_State *L) {
   lua_pushlightuserdata(SS, L);
   lua_setfield(SS, LUA_REGISTRYINDEX, "lualuahost");
   lua_atpanic(SS, lualua_atpanic);
+  lua_newtable(SS);
+  lua_newtable(SS);
+  lua_pushstring(SS, "k");
+  lua_setfield(SS, -2, "__mode");
+  lua_setmetatable(SS, -2);
+  lua_setfield(SS, LUA_REGISTRYINDEX, "lualuagctokens");
+  lua_newtable(SS);
+  lua_pushstring(SS, "__gc");
+  lua_pushcfunction(SS, lualua_gctoken_gc);
+  lua_settable(SS, -3);
+  lua_pushstring(SS, "__metatable");
+  lua_pushstring(SS, lualua_gctoken_metatable);
+  lua_settable(SS, -3);
+  lua_setfield(SS, LUA_REGISTRYINDEX, "lualuagctokenmt");
   p->state = SS;
   p->stackmax = LUA_MINSTACK;
   p->stateowner = 1;
@@ -325,11 +348,20 @@ static int lualua_newtable(lua_State *L) {
 
 static int lualua_newuserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lualua_checkoverflow(S, 1);
+  lualua_checkoverflow(S, 5);
   lua_newtable(L);
   lua_pushvalue(L, -1);
+  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
   int *p = lua_newuserdata(S->state, sizeof(int));
-  *p = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
+  *p = ref;
+  lua_getfield(S->state, LUA_REGISTRYINDEX, "lualuagctokens");
+  lua_pushvalue(S->state, -2);
+  int *token = lua_newuserdata(S->state, sizeof(int));
+  *token = ref;
+  lua_getfield(S->state, LUA_REGISTRYINDEX, "lualuagctokenmt");
+  lua_setmetatable(S->state, -2);
+  lua_settable(S->state, -3);
+  lua_pop(S->state, 1);
   return 1;
 }
 
