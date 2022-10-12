@@ -11,6 +11,8 @@ typedef struct {
   int stateowner;
 } lualua_State;
 
+static const char lualua_host_refname[] =
+    "github.com/lua-wow-tools/lualua/host";
 static const char lualua_sandbox_refname[] =
     "github.com/lua-wow-tools/lualua/sandbox";
 static const char lualua_state_metatable[] = "lualua state";
@@ -30,7 +32,9 @@ static int lualua_gctoken_gc(lua_State *SS) {
   lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
   lua_getfield(SS, -1, "host");
   lua_State *L = lua_touserdata(SS, -1);
-  luaL_unref(L, LUA_REGISTRYINDEX, ref);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  luaL_unref(L, -1, ref);
+  lua_pop(L, 1);
   return 0;
 }
 
@@ -356,8 +360,10 @@ static int lualua_newuserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   lualua_checkoverflow(S, 6);
   lua_newtable(L);
-  lua_pushvalue(L, -1);
-  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  lua_pushvalue(L, -2);
+  int ref = luaL_ref(L, -2);
+  lua_pop(L, 1);
   int *p = lua_newuserdata(S->state, sizeof(int));
   *p = ref;
   lua_getfield(S->state, LUA_REGISTRYINDEX, lualua_sandbox_refname);
@@ -705,7 +711,8 @@ static int lualua_touserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   int ref = *(int *)lua_touserdata(S->state, index);
-  lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  lua_rawgeti(L, -1, ref);
   return 1;
 }
 
@@ -838,6 +845,12 @@ int luaopen_lualua(lua_State *L) {
     lua_pushstring(L, "__metatable");
     lua_pushstring(L, lualua_state_metatable);
     lua_settable(L, -3);
+  }
+  lua_pop(L, 1);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  if (lua_isnil(L, -1)) {
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
   }
   lua_pop(L, 1);
   lua_newtable(L);
