@@ -11,14 +11,31 @@ typedef struct {
   int stateowner;
 } lualua_State;
 
+static const char lualua_host_refname[] =
+    "github.com/lua-wow-tools/lualua/host";
+static const char lualua_sandbox_refname[] =
+    "github.com/lua-wow-tools/lualua/sandbox";
 static const char lualua_state_metatable[] = "lualua state";
+static const char lualua_gctoken_metatable[] = "lualua gctoken";
 
 static int lualua_atpanic(lua_State *SS) {
-  lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
+  lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
+  lua_getfield(SS, -1, "host");
   lua_State *L = lua_touserdata(SS, -1);
-  lua_pushstring(L, lua_tostring(SS, -2));
+  lua_pushstring(L, lua_tostring(SS, -3));
   lua_settop(SS, 0);
   return lua_error(L);
+}
+
+static int lualua_gctoken_gc(lua_State *SS) {
+  int ref = *(int *)lua_touserdata(SS, 1);
+  lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
+  lua_getfield(SS, -1, "host");
+  lua_State *L = lua_touserdata(SS, -1);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  luaL_unref(L, -1, ref);
+  lua_pop(L, 1);
+  return 0;
 }
 
 static int lualua_newstate(lua_State *L) {
@@ -26,8 +43,24 @@ static int lualua_newstate(lua_State *L) {
   luaL_getmetatable(L, lualua_state_metatable);
   lua_setmetatable(L, -2);
   lua_State *SS = luaL_newstate();
+  lua_newtable(SS);
   lua_pushlightuserdata(SS, L);
-  lua_setfield(SS, LUA_REGISTRYINDEX, "lualuahost");
+  lua_setfield(SS, -2, "host");
+  lua_newtable(SS);
+  lua_newtable(SS);
+  lua_pushstring(SS, "k");
+  lua_setfield(SS, -2, "__mode");
+  lua_setmetatable(SS, -2);
+  lua_setfield(SS, -2, "gctokens");
+  lua_newtable(SS);
+  lua_pushstring(SS, "__gc");
+  lua_pushcfunction(SS, lualua_gctoken_gc);
+  lua_settable(SS, -3);
+  lua_pushstring(SS, "__metatable");
+  lua_pushstring(SS, lualua_gctoken_metatable);
+  lua_settable(SS, -3);
+  lua_setfield(SS, -2, "gctokenmt");
+  lua_setfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
   lua_atpanic(SS, lualua_atpanic);
   p->state = SS;
   p->stackmax = LUA_MINSTACK;
@@ -323,13 +356,28 @@ static int lualua_newtable(lua_State *L) {
   return 0;
 }
 
+static void lualua_gctokenize(lua_State *SS, int ref) {
+  lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
+  lua_getfield(SS, -1, "gctokens");
+  lua_pushvalue(SS, -3);
+  int *token = lua_newuserdata(SS, sizeof(int));
+  *token = ref;
+  lua_getfield(SS, -4, "gctokenmt");
+  lua_setmetatable(SS, -2);
+  lua_settable(SS, -3);
+  lua_pop(SS, 2);
+}
+
 static int lualua_newuserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
-  lualua_checkoverflow(S, 1);
+  lualua_checkoverflow(S, 6);
   lua_newtable(L);
-  lua_pushvalue(L, -1);
-  int *p = lua_newuserdata(S->state, sizeof(int));
-  *p = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  lua_pushvalue(L, -2);
+  int ref = luaL_ref(L, -2);
+  lua_pop(L, 1);
+  *(int *)lua_newuserdata(S->state, sizeof(int)) = ref;
+  lualua_gctokenize(S->state, ref);
   return 1;
 }
 
@@ -432,13 +480,16 @@ static int lualua_pushboolean(lua_State *L) {
 
 static int lualua_invokefromhostregistry(lua_State *SS) {
   int hostfunref = lua_tonumber(SS, lua_upvalueindex(1));
-  lua_getfield(SS, LUA_REGISTRYINDEX, "lualuahost");
+  lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
+  lua_getfield(SS, -1, "host");
   lua_State *L = lua_touserdata(SS, -1);
-  lua_pop(SS, 1);
+  lua_pop(SS, 2);
   if (!lua_checkstack(L, 3)) {
     return luaL_error(SS, "host stack overflow");
   }
-  lua_rawgeti(L, LUA_REGISTRYINDEX, hostfunref);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  lua_rawgeti(L, -1, hostfunref);
+  lua_remove(L, -2);
   lualua_State *p = lua_newuserdata(L, sizeof(*p));
   luaL_getmetatable(L, lualua_state_metatable);
   lua_setmetatable(L, -2);
@@ -459,9 +510,12 @@ static int lualua_invokefromhostregistry(lua_State *SS) {
 
 static void lualua_dopushcfunction(lua_State *L, lualua_State *S) {
   lualua_checkoverflow(S, 2);
-  int hostfunref = luaL_ref(L, LUA_REGISTRYINDEX); /* TODO unref */
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  lua_insert(L, -2);
+  int hostfunref = luaL_ref(L, -2);
   lua_pushnumber(S->state, hostfunref);
   lua_pushcclosure(S->state, lualua_invokefromhostregistry, 1);
+  lualua_gctokenize(S->state, hostfunref);
 }
 
 static int lualua_pushcfunction(lua_State *L) {
@@ -665,7 +719,8 @@ static int lualua_touserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   int ref = *(int *)lua_touserdata(S->state, index);
-  lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  lua_rawgeti(L, -1, ref);
   return 1;
 }
 
@@ -798,6 +853,12 @@ int luaopen_lualua(lua_State *L) {
     lua_pushstring(L, "__metatable");
     lua_pushstring(L, lualua_state_metatable);
     lua_settable(L, -3);
+  }
+  lua_pop(L, 1);
+  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+  if (lua_isnil(L, -1)) {
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
   }
   lua_pop(L, 1);
   lua_newtable(L);
