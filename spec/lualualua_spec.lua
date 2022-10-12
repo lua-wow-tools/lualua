@@ -21,6 +21,7 @@ describe('lualualua', function()
   end)
   it('runs lualua_spec.lua', function()
     local s = require('lualua').newstate()
+    s:openlibs()
     s:loadstring([=[
       assert = require('luassert')
       function describe(name, fn)

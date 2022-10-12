@@ -63,7 +63,6 @@ static int lualua_newstate(lua_State *L) {
   lua_setfield(SS, -2, "gctokenmt");
   lua_setfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
   lua_atpanic(SS, lualua_atpanic);
-  luaL_openlibs(SS);
   p->state = SS;
   p->stackmax = LUA_MINSTACK;
   p->stateowner = 1;
