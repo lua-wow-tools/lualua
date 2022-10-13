@@ -32,11 +32,6 @@ local function checkboolean(s, index)
   return s:toboolean(index)
 end
 
-local function checkstring(s, index)
-  assert(s:isstring(index))
-  return s:tostring(index)
-end
-
 local function checkacceptableindex(s, index, ss)
   local n = s:checknumber(index)
   assert(isacceptableindex(ss, n), 'invalid index')
@@ -96,7 +91,7 @@ local stateindex = {
   end,
   loadstring = function(s)
     local ss = checkstate(s, 1)
-    local str = checkstring(s, 2)
+    local str = s:checkstring(2)
     ss:loadstring(str)
     return 1
   end,
@@ -130,7 +125,7 @@ local stateindex = {
   end,
   pushstring = function(s)
     local ss = checkstate(s, 1)
-    local str = checkstring(s, 2)
+    local str = s:checkstring(2)
     ss:pushstring(str)
     return 0
   end,
@@ -142,7 +137,7 @@ local stateindex = {
   end,
   setglobal = function(s)
     local ss = checkstate(s, 1)
-    local name = checkstring(s, 2)
+    local name = s:checkstring(2)
     ss:setglobal(name)
     return 0
   end,

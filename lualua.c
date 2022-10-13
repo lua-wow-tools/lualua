@@ -156,6 +156,14 @@ static int lualua_checkstack(lua_State *L) {
   return 1;
 }
 
+static int lualua_checkstring(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int index = lualua_checkacceptableindex(L, 2, S);
+  const char *value = luaL_checkstring(S->state, index);
+  lua_pushstring(L, value);
+  return 1;
+}
+
 static int lualua_concat(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int n = luaL_checkint(L, 2);
@@ -751,6 +759,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"call", lualua_call},
     {"checknumber", lualua_checknumber},
     {"checkstack", lualua_checkstack},
+    {"checkstring", lualua_checkstring},
     {"concat", lualua_concat},
     {"createtable", lualua_createtable},
     {"equal", lualua_equal},
