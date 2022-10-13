@@ -187,7 +187,7 @@ local stateindex = {
     local ss = checkstate(s, 1)
     s:newtable()
     s:pushvalue(-1)
-    local ref = s:ref(lualua.REGISTRYINDEX, -1)
+    local ref = s:ref(lualua.REGISTRYINDEX) -- TODO unref
     local t = ss:newuserdata()
     t.ref = ref
     return 1
@@ -230,8 +230,16 @@ local stateindex = {
     ss:pushboolean(b)
     return 0
   end,
-  pushcfunction = function()
-    error('pushcfunction not implemented')
+  pushcfunction = function(s)
+    local ss = checkstate(s, 1)
+    assert(s:isfunction(2))
+    s:settop(2)
+    local ref = s:ref(lualua.REGISTRYINDEX) -- TODO unref
+    ss:pushcfunction(function(sss)
+      assert(type(sss) == 'userdata')
+      error('not implemented for ref ' .. ref)
+    end)
+    return 0
   end,
   pushnil = function(s)
     local ss = checkstate(s, 1)
