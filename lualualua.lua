@@ -197,8 +197,14 @@ local stateindex = {
     ss:openlibs()
     return 0
   end,
-  pcall = function()
-    error('pcall not implemented')
+  pcall = function(s)
+    local ss = checkstate(s, 1)
+    local nargs = s:checknumber(2)
+    local nresults = s:checknumber(3)
+    local errfunc = s:checknumber(4)
+    assert(errfunc == 0 or isacceptableindex(ss, errfunc), 'invalid index')
+    s:pushnumber(ss:pcall(nargs, nresults, errfunc))
+    return 1
   end,
   pop = function(s)
     local ss = checkstate(s, 1)
@@ -351,6 +357,12 @@ local stateindex = {
     else
       s:pushnil()
     end
+    return 1
+  end,
+  typename = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushstring(ss:typename(index))
     return 1
   end,
 }
