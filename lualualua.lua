@@ -50,10 +50,26 @@ local function register(s, t)
 end
 
 local stateindex = {
+  call = function()
+    error('call not implemented')
+  end,
+  checkstack = function(s)
+    local ss = checkstate(s, 1)
+    local n = s:checknumber(2)
+    s:pushboolean(ss:checkstack(n))
+    return 1
+  end,
   concat = function(s)
     local ss = checkstate(s, 1)
     local n = s:checknumber(2)
     ss:concat(n)
+    return 0
+  end,
+  createtable = function(s)
+    local ss = checkstate(s, 1)
+    local narr = s:checknumber(2)
+    local nrec = s:checknumber(3)
+    ss:createtable(narr, nrec)
     return 0
   end,
   equal = function(s)
@@ -62,6 +78,10 @@ local stateindex = {
     local index2 = checkacceptableindex(s, 3, ss)
     s:pushboolean(ss:equal(index1, index2))
     return 1
+  end,
+  error = function(s)
+    local ss = checkstate(s, 1)
+    ss:error()
   end,
   getfenv = function(s)
     local ss = checkstate(s, 1)
@@ -74,6 +94,12 @@ local stateindex = {
     local index = checkacceptableindex(s, 2, ss)
     local name = s:checkstring(3)
     ss:getfield(index, name)
+    return 0
+  end,
+  getglobal = function(s)
+    local ss = checkstate(s, 1)
+    local name = s:checkstring(2)
+    ss:getglobal(name)
     return 0
   end,
   getmetatable = function(s)
@@ -93,6 +119,12 @@ local stateindex = {
     s:pushnumber(ss:gettop())
     return 1
   end,
+  insert = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:insert(index)
+    return 0
+  end,
   isfunction = function(s)
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2, ss)
@@ -105,10 +137,29 @@ local stateindex = {
     s:pushboolean(ss:isnil(index))
     return 1
   end,
+  isnumber = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:isnumber(index))
+    return 1
+  end,
+  isstring = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:isstring(index))
+    return 1
+  end,
   istable = function(s)
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2, ss)
     s:pushboolean(ss:istable(index))
+    return 1
+  end,
+  lessthan = function(s)
+    local ss = checkstate(s, 1)
+    local index1 = checkacceptableindex(s, 2, ss)
+    local index2 = checkacceptableindex(s, 3, ss)
+    s:pushboolean(ss:lessthan(index1, index2))
     return 1
   end,
   loadstring = function(s)
@@ -124,6 +175,23 @@ local stateindex = {
   end,
   newuserdata = function()
     error('newuserdata not implemented')
+  end,
+  next = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:next(index))
+    return 1
+  end,
+  objlen = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushnumber(ss:objlen(index))
+    return 1
+  end,
+  openlibs = function(s)
+    local ss = checkstate(s, 1)
+    ss:openlibs()
+    return 0
   end,
   pcall = function()
     error('pcall not implemented')
