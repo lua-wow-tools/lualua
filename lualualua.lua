@@ -66,7 +66,8 @@ local stateindex = {
   isnil = function(s)
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2)
-    return ss:isnil(index)
+    s:pushboolean(ss:isnil(index))
+    return 1
   end,
   newtable = function(s)
     local ss = checkstate(s, 1)
