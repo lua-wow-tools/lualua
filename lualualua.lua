@@ -23,9 +23,8 @@ local function checkstate(s, index)
   return s:touserdata(index).state
 end
 
-local function checkacceptableindex(s, index)
-  -- TODO actually check
-  return s:tonumber(index)
+local function isacceptableindex(s, index)
+  return index > 0 or index < 0 and -index <= s:gettop()
 end
 
 local function checkboolean(s, index)
@@ -41,6 +40,12 @@ end
 local function checkstring(s, index)
   assert(s:isstring(index))
   return s:tostring(index)
+end
+
+local function checkacceptableindex(s, index, ss)
+  local n = checknumber(s, index)
+  assert(isacceptableindex(ss, n))
+  return n
 end
 
 local function register(s, t)
@@ -65,7 +70,7 @@ local stateindex = {
   end,
   isnil = function(s)
     local ss = checkstate(s, 1)
-    local index = checkacceptableindex(s, 2)
+    local index = checkacceptableindex(s, 2, ss)
     s:pushboolean(ss:isnil(index))
     return 1
   end,
@@ -105,19 +110,19 @@ local stateindex = {
   end,
   toboolean = function(s)
     local ss = checkstate(s, 1)
-    local index = checkacceptableindex(s, 2)
+    local index = checkacceptableindex(s, 2, ss)
     s:pushboolean(ss:toboolean(index))
     return 1
   end,
   tonumber = function(s)
     local ss = checkstate(s, 1)
-    local index = checkacceptableindex(s, 2)
+    local index = checkacceptableindex(s, 2, ss)
     s:pushnumber(ss:tonumber(index))
     return 1
   end,
   tostring = function(s)
     local ss = checkstate(s, 1)
-    local index = checkacceptableindex(s, 2)
+    local index = checkacceptableindex(s, 2, ss)
     -- Work around how lualua is strict about the argument to pushstring
     local str = ss:tostring(index)
     if str then
