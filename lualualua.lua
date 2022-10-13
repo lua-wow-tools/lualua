@@ -122,10 +122,10 @@ local stateindex = {
     ss:newtable()
     return 0
   end,
-  newuserdata = function(s)
+  newuserdata = function()
     error('newuserdata not implemented')
   end,
-  pcall = function(s)
+  pcall = function()
     error('pcall not implemented')
   end,
   pop = function(s)
@@ -140,7 +140,7 @@ local stateindex = {
     ss:pushboolean(b)
     return 0
   end,
-  pushcfunction = function(s)
+  pushcfunction = function()
     error('pushcfunction not implemented')
   end,
   pushnil = function(s)
@@ -205,7 +205,7 @@ local stateindex = {
     s:pushnumber(ss:ref(index))
     return 1
   end,
-  register = function(s)
+  register = function()
     error('register not implemented')
   end,
   remove = function(s)
