@@ -39,7 +39,7 @@ end
 
 local function checkacceptableindex(s, index, ss)
   local n = s:checknumber(index)
-  assert(isacceptableindex(ss, n))
+  assert(isacceptableindex(ss, n), 'invalid index')
   return n
 end
 
@@ -58,6 +58,25 @@ local stateindex = {
     ss:concat(n)
     return 0
   end,
+  equal = function(s)
+    local ss = checkstate(s, 1)
+    local index1 = checkacceptableindex(s, 2, ss)
+    local index2 = checkacceptableindex(s, 3, ss)
+    s:pushboolean(ss:equal(index1, index2))
+    return 1
+  end,
+  getmetatable = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:getmetatable(index))
+    return 1
+  end,
+  gettable = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:gettable(index)
+    return 0
+  end,
   gettop = function(s)
     local ss = checkstate(s, 1)
     s:pushnumber(ss:gettop())
@@ -69,9 +88,27 @@ local stateindex = {
     s:pushboolean(ss:isnil(index))
     return 1
   end,
+  istable = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:istable(index))
+    return 1
+  end,
+  loadstring = function(s)
+    local ss = checkstate(s, 1)
+    local str = checkstring(s, 2)
+    ss:loadstring(str)
+    return 1
+  end,
   newtable = function(s)
     local ss = checkstate(s, 1)
     ss:newtable()
+    return 0
+  end,
+  pop = function(s)
+    local ss = checkstate(s, 1)
+    local n = s:checknumber(2)
+    ss:pop(n)
     return 0
   end,
   pushboolean = function(s)
@@ -95,6 +132,30 @@ local stateindex = {
     local ss = checkstate(s, 1)
     local str = checkstring(s, 2)
     ss:pushstring(str)
+    return 0
+  end,
+  pushvalue = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:pushvalue(index)
+    return 1
+  end,
+  setglobal = function(s)
+    local ss = checkstate(s, 1)
+    local name = checkstring(s, 2)
+    ss:setglobal(name)
+    return 0
+  end,
+  setmetatable = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:setmetatable(index))
+    return 1
+  end,
+  settable = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:settable(index)
     return 0
   end,
   settop = function(s)
