@@ -24,7 +24,12 @@ local function checkstate(s, index)
 end
 
 local function isacceptableindex(s, index)
-  return index > 0 or index < 0 and -index <= s:gettop()
+  return index > 0
+    or index < 0 and -index <= s:gettop()
+    or index == lualua.REGISTRYINDEX
+    or index == lualua.GLOBALSINDEX
+    or index == lualua.ENVIRONINDEX
+    or index == lualua.ERRORHANDLERINDEX
 end
 
 local function checkboolean(s, index)
@@ -34,7 +39,10 @@ end
 
 local function checkacceptableindex(s, index, ss)
   local n = s:checknumber(index)
-  assert(isacceptableindex(ss, n), 'invalid index')
+  if not isacceptableindex(ss, n) then
+    s:pushstring('invalid index')
+    s:error()
+  end
   return n
 end
 
@@ -60,6 +68,19 @@ local stateindex = {
     s:pushboolean(ss:equal(index1, index2))
     return 1
   end,
+  getfenv = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:getfenv(index)
+    return 0
+  end,
+  getfield = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    local name = s:checkstring(3)
+    ss:getfield(index, name)
+    return 0
+  end,
   getmetatable = function(s)
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2, ss)
@@ -77,6 +98,12 @@ local stateindex = {
     s:pushnumber(ss:gettop())
     return 1
   end,
+  isfunction = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:isfunction(index))
+    return 1
+  end,
   isnil = function(s)
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2, ss)
@@ -92,7 +119,7 @@ local stateindex = {
   loadstring = function(s)
     local ss = checkstate(s, 1)
     local str = s:checkstring(2)
-    ss:loadstring(str)
+    s:pushnumber(ss:loadstring(str))
     return 1
   end,
   newtable = function(s)
@@ -134,6 +161,40 @@ local stateindex = {
     local index = checkacceptableindex(s, 2, ss)
     ss:pushvalue(index)
     return 1
+  end,
+  ref = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushnumber(ss:ref(index))
+    return 1
+  end,
+  register = function(s)
+    error('not implemented')
+  end,
+  remove = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:remove(index)
+    return 0
+  end,
+  replace = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:replace(index)
+    return 0
+  end,
+  setfenv = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:setfenv(index))
+    return 1
+  end,
+  setfield = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    local name = s:checkstring(3)
+    ss:setfield(index, name)
+    return 0
   end,
   setglobal = function(s)
     local ss = checkstate(s, 1)
