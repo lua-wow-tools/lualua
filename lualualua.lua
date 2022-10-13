@@ -117,7 +117,13 @@ local stateindex = {
   tostring = function(s)
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2)
-    s:pushstring(ss:tostring(index))
+    -- Work around how lualua is strict about the argument to pushstring
+    local str = ss:tostring(index)
+    if str then
+      s:pushstring(str)
+    else
+      s:pushnil()
+    end
     return 1
   end,
 }
