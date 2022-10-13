@@ -50,8 +50,12 @@ local function register(s, t)
 end
 
 local stateindex = {
-  call = function()
-    error('call not implemented')
+  call = function(s)
+    local ss = checkstate(s, 1)
+    local nargs = s:checknumber(2)
+    local nresults = s:checknumber(3)
+    ss:call(nargs, nresults)
+    return 0
   end,
   checkstack = function(s)
     local ss = checkstate(s, 1)
