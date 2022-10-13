@@ -32,18 +32,13 @@ local function checkboolean(s, index)
   return s:toboolean(index)
 end
 
-local function checknumber(s, index)
-  assert(s:isnumber(index))
-  return s:tonumber(index)
-end
-
 local function checkstring(s, index)
   assert(s:isstring(index))
   return s:tostring(index)
 end
 
 local function checkacceptableindex(s, index, ss)
-  local n = checknumber(s, index)
+  local n = s:checknumber(index)
   assert(isacceptableindex(ss, n))
   return n
 end
@@ -59,7 +54,7 @@ end
 local stateindex = {
   concat = function(s)
     local ss = checkstate(s, 1)
-    local n = checknumber(s, 2)
+    local n = s:checknumber(2)
     ss:concat(n)
     return 0
   end,
@@ -92,7 +87,7 @@ local stateindex = {
   end,
   pushnumber = function(s)
     local ss = checkstate(s, 1)
-    local n = checknumber(s, 2)
+    local n = s:checknumber(2)
     ss:pushnumber(n)
     return 0
   end,
@@ -104,7 +99,7 @@ local stateindex = {
   end,
   settop = function(s)
     local ss = checkstate(s, 1)
-    local n = checknumber(s, 2) -- TODO check valid
+    local n = s:checknumber(2) -- TODO check valid
     ss:settop(n)
     return 0
   end,
