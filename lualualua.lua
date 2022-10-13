@@ -104,7 +104,7 @@ local stateindex = {
   end,
   settop = function(s)
     local ss = checkstate(s, 1)
-    local n = s:tonumber(2) -- TODO check valid
+    local n = checknumber(s, 2) -- TODO check valid
     ss:settop(n)
     return 0
   end,
