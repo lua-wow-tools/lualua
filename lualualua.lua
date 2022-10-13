@@ -23,6 +23,16 @@ local function checkstate(s, index)
   return s:touserdata(index).state
 end
 
+local function checkacceptableindex(s, index)
+  -- TODO actually check
+  return s:tonumber(index)
+end
+
+local function checkboolean(s, index)
+  assert(s:isboolean(index))
+  return s:toboolean(index)
+end
+
 local function checknumber(s, index)
   assert(s:isnumber(index))
   return s:tonumber(index)
@@ -53,6 +63,27 @@ local stateindex = {
     s:pushnumber(ss:gettop())
     return 1
   end,
+  isnil = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2)
+    return ss:isnil(index)
+  end,
+  newtable = function(s)
+    local ss = checkstate(s, 1)
+    ss:newtable()
+    return 0
+  end,
+  pushboolean = function(s)
+    local ss = checkstate(s, 1)
+    local b = checkboolean(s, 2)
+    ss:pushboolean(b)
+    return 0
+  end,
+  pushnil = function(s)
+    local ss = checkstate(s, 1)
+    ss:pushnil()
+    return 0
+  end,
   pushnumber = function(s)
     local ss = checkstate(s, 1)
     local n = checknumber(s, 2)
@@ -65,9 +96,27 @@ local stateindex = {
     ss:pushstring(str)
     return 0
   end,
+  settop = function(s)
+    local ss = checkstate(s, 1)
+    local n = s:tonumber(2) -- TODO check valid
+    ss:settop(n)
+    return 0
+  end,
+  toboolean = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2)
+    s:pushboolean(ss:toboolean(index))
+    return 1
+  end,
+  tonumber = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2)
+    s:pushnumber(ss:tonumber(index))
+    return 1
+  end,
   tostring = function(s)
     local ss = checkstate(s, 1)
-    local index = s:tonumber(2) -- TODO checkacceptableindex
+    local index = checkacceptableindex(s, 2)
     s:pushstring(ss:tostring(index))
     return 1
   end,
