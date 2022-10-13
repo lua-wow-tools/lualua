@@ -32,11 +32,6 @@ local function isacceptableindex(s, index)
     or index == lualua.ERRORHANDLERINDEX
 end
 
-local function checkboolean(s, index)
-  assert(s:isboolean(index))
-  return s:toboolean(index)
-end
-
 local function checkacceptableindex(s, index, ss)
   local n = s:checknumber(index)
   if not isacceptableindex(ss, n) then
@@ -127,6 +122,12 @@ local stateindex = {
     ss:newtable()
     return 0
   end,
+  newuserdata = function(s)
+    error('newuserdata not implemented')
+  end,
+  pcall = function(s)
+    error('pcall not implemented')
+  end,
   pop = function(s)
     local ss = checkstate(s, 1)
     local n = s:checknumber(2)
@@ -135,9 +136,12 @@ local stateindex = {
   end,
   pushboolean = function(s)
     local ss = checkstate(s, 1)
-    local b = checkboolean(s, 2)
+    local b = s:toboolean(2)
     ss:pushboolean(b)
     return 0
+  end,
+  pushcfunction = function(s)
+    error('pushcfunction not implemented')
   end,
   pushnil = function(s)
     local ss = checkstate(s, 1)
@@ -160,7 +164,40 @@ local stateindex = {
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2, ss)
     ss:pushvalue(index)
+    return 0
+  end,
+  rawequal = function(s)
+    local ss = checkstate(s, 1)
+    local index1 = checkacceptableindex(s, 2, ss)
+    local index2 = checkacceptableindex(s, 3, ss)
+    s:pushboolean(ss:rawequal(index1, index2))
     return 1
+  end,
+  rawget = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:rawget(index)
+    return 0
+  end,
+  rawgeti = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    local n = s:checknumber(3)
+    ss:rawgeti(index, n)
+    return 0
+  end,
+  rawset = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:rawset(index)
+    return 0
+  end,
+  rawseti = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    local n = s:checknumber(3)
+    ss:rawseti(index, n)
+    return 0
   end,
   ref = function(s)
     local ss = checkstate(s, 1)
@@ -169,7 +206,7 @@ local stateindex = {
     return 1
   end,
   register = function(s)
-    error('not implemented')
+    error('register not implemented')
   end,
   remove = function(s)
     local ss = checkstate(s, 1)
