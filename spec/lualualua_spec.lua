@@ -18,7 +18,7 @@ describe('lualualua', function()
       describe = busted
       it = busted
     ]=])
-    s:call(0, 1)
+    s:call(0, 0)
     s:loadstring([=[
       local req, lib = ...
       return function(s)
