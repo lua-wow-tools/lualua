@@ -185,8 +185,11 @@ local stateindex = {
   end,
   newuserdata = function(s)
     local ss = checkstate(s, 1)
-    ss:newuserdata()
-    s:newtable() -- TODO connect
+    s:newtable()
+    s:pushvalue(-1)
+    local ref = s:ref(lualua.REGISTRYINDEX, -1)
+    local t = ss:newuserdata()
+    t.ref = ref
     return 1
   end,
   next = function(s)
@@ -371,8 +374,12 @@ local stateindex = {
   touserdata = function(s)
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2, ss)
-    ss:touserdata(index)
-    s:newuserdata() -- TODO connect
+    local t = ss:touserdata(index)
+    if not t then
+      s:pushnil()
+    else
+      s:rawgeti(lualua.REGISTRYINDEX, t.ref)
+    end
     return 1
   end,
   typename = function(s)
