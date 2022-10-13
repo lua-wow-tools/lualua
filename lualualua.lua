@@ -159,6 +159,12 @@ local stateindex = {
     s:pushboolean(ss:istable(index))
     return 1
   end,
+  isuserdata = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:isuserdata(index))
+    return 1
+  end,
   lessthan = function(s)
     local ss = checkstate(s, 1)
     local index1 = checkacceptableindex(s, 2, ss)
@@ -177,8 +183,11 @@ local stateindex = {
     ss:newtable()
     return 0
   end,
-  newuserdata = function()
-    error('newuserdata not implemented')
+  newuserdata = function(s)
+    local ss = checkstate(s, 1)
+    ss:newuserdata()
+    s:newtable() -- TODO connect
+    return 1
   end,
   next = function(s)
     local ss = checkstate(s, 1)
@@ -357,6 +366,13 @@ local stateindex = {
     else
       s:pushnil()
     end
+    return 1
+  end,
+  touserdata = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    ss:touserdata(index)
+    s:newuserdata() -- TODO connect
     return 1
   end,
   typename = function(s)
