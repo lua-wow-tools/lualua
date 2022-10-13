@@ -741,9 +741,13 @@ static int lualua_tostring(lua_State *L) {
 static int lualua_touserdata(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  int ref = *(int *)lua_touserdata(S->state, index);
-  lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
-  lua_rawgeti(L, -1, ref);
+  int *ref = lua_touserdata(S->state, index);
+  if (ref == NULL) {
+    lua_pushnil(L);
+  } else {
+    lua_getfield(L, LUA_REGISTRYINDEX, lualua_host_refname);
+    lua_rawgeti(L, -1, *ref);
+  }
   return 1;
 }
 
