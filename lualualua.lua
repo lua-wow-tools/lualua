@@ -241,8 +241,15 @@ local stateindex = {
       t.state = sss
       s:getfield(lualua.REGISTRYINDEX, 'lualua state')
       s:setmetatable(-2)
-      s:call(1, 0)
-      return 0
+      if s:pcall(1, 1, 0) ~= 0 then
+        sss:pushstring(s:tostring(-1))
+        s:pop(1)
+        sss:error()
+      else
+        local nreturn = s:tonumber(-1)
+        s:pop(1)
+        return nreturn
+      end
     end)
     return 0
   end,
