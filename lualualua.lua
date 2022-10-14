@@ -149,6 +149,12 @@ local stateindex = {
     ss:insert(index)
     return 0
   end,
+  iscfunction = function(s)
+    local ss = checkstate(s, 1)
+    local index = checkacceptableindex(s, 2, ss)
+    s:pushboolean(ss:iscfunction(index))
+    return 1
+  end,
   isfunction = function(s)
     local ss = checkstate(s, 1)
     local index = checkacceptableindex(s, 2, ss)
