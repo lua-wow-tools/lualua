@@ -1,13 +1,19 @@
+# `lualua`
+
 The Lua C API, in Lua. Provides a mechanism for creating and manipulating
 _sandbox_ Lua states separate from the _host_ Lua state.
 
-Install via luarocks. Requires a lua 5.1 installation.
+`lualua` is still under active development; its API is not yet stable.
+
+## Installation
+
+Install via luarocks. Requires Lua 5.1.
 
 ```sh
 luarocks install lualua
 ```
 
-Example usage:
+## Usage
 
 ```lua
 local sandbox = require('lualua').newstate()
@@ -18,15 +24,15 @@ sandbox:call(2, 1)
 assert(sandbox:tonumber(-1) == 46)
 ```
 
-`lualua` is still under active development; its API is not yet stable.
-
-A few things of note:
+## Notes
 
 * `pushcfunction` provides a mechanism for the sandbox to call back into the host.
 * `newuserdata` provides a userdata to the sandbox backed by a table in the host.
 * Misuse of the API throws errors in the host Lua and resets the sandbox stack.
 
-API coverage:
+## API Coverage
+
+### Base library
 
 | Lua C API | `lualua` equivalent |
 | --- | --- |
@@ -63,7 +69,7 @@ API coverage:
 | `lua_isuserdata` | `b = s:isuserdata(index)` |
 | `lua_lessthan` | `b = s:lessthan(index1, index2)` |
 | `lua_load` | Not supported |
-| `lua_newstate` | `require('lualua').newstate()` |
+| `lua_newstate` | Not supported |
 | `lua_newtable` | `s:newtable()` |
 | `lua_newthread` | Not supported |
 | `lua_newuserdata` | `t = s:newuserdata()` |
@@ -115,3 +121,73 @@ API coverage:
 | `lua_typename` | Not supported |
 | `lua_xmove` | Not supported |
 | `lua_yield` | Not supported |
+
+### Debug library
+
+| Lua C API | `lualua` equivalent |
+| --- | --- |
+| `lua_gethook` | Not supported |
+| `lua_gethookcount` | Not supported |
+| `lua_gethookmask` | Not supported |
+| `lua_getinfo` | Not supported |
+| `lua_getlocal` | Not supported |
+| `lua_getstack` | Not supported |
+| `lua_getupvalue` | Not supported |
+| `lua_sethook` | Not supported |
+| `lua_setlocal` | Not supported |
+| `lua_setupvalue` | Not supported |
+
+### Auxiliary library
+
+Note that the C auxiliary library is built on top of the C base library, so
+anything labeled "Not supported" can instead be implemented using the `lualua`
+base library equivalents.
+
+| Lua C API | `lualua` equivalent |
+| --- | --- |
+| `luaL_addchar` | Not supported |
+| `luaL_addlstring` | Not supported |
+| `luaL_addsize` | Not supported |
+| `luaL_addstring` | Not supported |
+| `luaL_addvalue` | Not supported |
+| `luaL_argcheck` | Not supported |
+| `luaL_argerror` | Not supported |
+| `luaL_buffinit` | Not supported |
+| `luaL_callmeta` | Not supported |
+| `luaL_checkany` | Not supported |
+| `luaL_checkint` | Not supported |
+| `luaL_checkinteger` | Not supported |
+| `luaL_checklong` | Not supported |
+| `luaL_checklstring` | Not supported |
+| `luaL_checknumber` | Not supported |
+| `luaL_checkoption` | Not supported |
+| `luaL_checkstack` | Not supported |
+| `luaL_checkstring` | Not supported |
+| `luaL_checktype` | Not supported |
+| `luaL_checkudata` | Not supported |
+| `luaL_dofile` | Not supported |
+| `luaL_dostring` | Not supported |
+| `luaL_error` | Not supported |
+| `luaL_getmetafield` | Not supported |
+| `luaL_getmetatable` | Not supported |
+| `luaL_gsub` | Not supported |
+| `luaL_loadbuffer` | Not supported |
+| `luaL_loadfile` | Not supported |
+| `luaL_loadstring` | Not supported |
+| `luaL_newmetatable` | Not supported |
+| `luaL_newstate` | `s = require('lualua').newstate()` |
+| `luaL_openlibs` | `s:openlibs()` |
+| `luaL_optint` | Not supported |
+| `luaL_optinteger` | Not supported |
+| `luaL_optlong` | Not supported |
+| `luaL_optlstring` | Not supported |
+| `luaL_optnumber` | Not supported |
+| `luaL_optstring` | Not supported |
+| `luaL_prepbuffer` | Not supported |
+| `luaL_pushresult` | Not supported |
+| `luaL_ref` | `n = s:ref(index)` |
+| `luaL_register` | Not supported |
+| `luaL_typename` | `str = s:typename(index)` |
+| `luaL_typerror` | Not supported |
+| `luaL_unref` | Not supported |
+| `luaL_where` | Not supported |
