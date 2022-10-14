@@ -324,7 +324,7 @@ local stateindex = {
     local name = s:checkstring(2)
     s:settop(3)
     dopushcfunction(s, ss)
-    s:setglobal(name)
+    ss:setglobal(name)
     return 0
   end,
   remove = function(s)
