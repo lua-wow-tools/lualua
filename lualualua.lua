@@ -240,7 +240,10 @@ local stateindex = {
     local nargs = s:checknumber(2)
     local nresults = s:checknumber(3)
     local errfunc = s:checknumber(4)
-    assert(errfunc == 0 or isacceptableindex(ss, errfunc), 'invalid index')
+    if errfunc ~= 0 and not isacceptableindex(ss, errfunc) then
+      ss:pushstring('invalid index')
+      ss:error()
+    end
     s:pushnumber(ss:pcall(nargs, nresults, errfunc))
     return 1
   end,
