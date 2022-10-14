@@ -16,6 +16,7 @@ static const char lualua_host_refname[] =
     "github.com/lua-wow-tools/lualua/host";
 static const char lualua_sandbox_refname[] =
     "github.com/lua-wow-tools/lualua/sandbox";
+static const char lualua_debug_metatable[] = "lualua debug";
 static const char lualua_state_metatable[] = "lualua state";
 static const char lualua_gctoken_metatable[] = "lualua gctoken";
 
@@ -211,6 +212,20 @@ static int lualua_getmetatable(lua_State *L) {
   lualua_checkoverflow(S, 1);
   int result = lua_getmetatable(S->state, index);
   lua_pushboolean(L, result);
+  return 1;
+}
+
+static int lualua_getstack(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int level = luaL_checkint(L, 2);
+  lua_Debug *ar = lua_newuserdata(L, sizeof(lua_Debug));
+  if (lua_getstack(S->state, level, ar)) {
+    luaL_getmetatable(L, lualua_debug_metatable);
+    lua_setmetatable(L, -2);
+  } else {
+    lua_pop(L, 1);
+    lua_pushnil(L);
+  }
   return 1;
 }
 
@@ -754,6 +769,7 @@ static const struct luaL_Reg lualua_state_index[] = {
     {"getfield", lualua_getfield},
     {"getglobal", lualua_getglobal},
     {"getmetatable", lualua_getmetatable},
+    {"getstack", lualua_getstack},
     {"gettable", lualua_gettable},
     {"gettop", lualua_gettop},
     {"insert", lualua_insert},
@@ -864,6 +880,12 @@ int luaopen_lualua(lua_State *L) {
     lua_settable(L, -3);
     lua_pushstring(L, "__metatable");
     lua_pushstring(L, lualua_state_metatable);
+    lua_settable(L, -3);
+  }
+  lua_pop(L, 1);
+  if (luaL_newmetatable(L, lualua_debug_metatable)) {
+    lua_pushstring(L, "__metatable");
+    lua_pushstring(L, lualua_debug_metatable);
     lua_settable(L, -3);
   }
   lua_pop(L, 1);
