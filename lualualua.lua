@@ -236,8 +236,13 @@ local stateindex = {
     s:settop(2)
     local ref = s:ref(lualua.REGISTRYINDEX) -- TODO unref
     ss:pushcfunction(function(sss)
-      assert(type(sss) == 'userdata')
-      error('not implemented for ref ' .. ref)
+      s:rawgeti(lualua.REGISTRYINDEX, ref)
+      local t = s:newuserdata()
+      t.state = sss
+      s:getfield(lualua.REGISTRYINDEX, 'lualua state')
+      s:setmetatable(-2)
+      s:call(1, 0)
+      return 0
     end)
     return 0
   end,
