@@ -49,6 +49,26 @@ local function register(s, t)
   end
 end
 
+local function dopushcfunction(s, ss)
+  local ref = s:ref(lualua.REGISTRYINDEX) -- TODO unref
+  ss:pushcfunction(function(sss)
+    s:rawgeti(lualua.REGISTRYINDEX, ref)
+    local t = s:newuserdata()
+    t.state = sss
+    s:getfield(lualua.REGISTRYINDEX, 'lualua state')
+    s:setmetatable(-2)
+    if s:pcall(1, 1, 0) ~= 0 then
+      sss:pushstring(s:tostring(-1))
+      s:pop(1)
+      sss:error()
+    else
+      local nreturn = s:tonumber(-1)
+      s:pop(1)
+      return nreturn
+    end
+  end)
+end
+
 local stateindex = {
   call = function(s)
     local ss = checkstate(s, 1)
@@ -234,23 +254,7 @@ local stateindex = {
     local ss = checkstate(s, 1)
     assert(s:isfunction(2))
     s:settop(2)
-    local ref = s:ref(lualua.REGISTRYINDEX) -- TODO unref
-    ss:pushcfunction(function(sss)
-      s:rawgeti(lualua.REGISTRYINDEX, ref)
-      local t = s:newuserdata()
-      t.state = sss
-      s:getfield(lualua.REGISTRYINDEX, 'lualua state')
-      s:setmetatable(-2)
-      if s:pcall(1, 1, 0) ~= 0 then
-        sss:pushstring(s:tostring(-1))
-        s:pop(1)
-        sss:error()
-      else
-        local nreturn = s:tonumber(-1)
-        s:pop(1)
-        return nreturn
-      end
-    end)
+    dopushcfunction(s, ss)
     return 0
   end,
   pushnil = function(s)
@@ -315,8 +319,13 @@ local stateindex = {
     s:pushnumber(ss:ref(index))
     return 1
   end,
-  register = function()
-    error('register not implemented')
+  register = function(s)
+    local ss = checkstate(s, 1)
+    local name = s:checkstring(2)
+    s:settop(3)
+    dopushcfunction(s, ss)
+    s:setglobal(name)
+    return 0
   end,
   remove = function(s)
     local ss = checkstate(s, 1)
