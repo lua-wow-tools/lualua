@@ -400,12 +400,6 @@ static int lualua_objlen(lua_State *L) {
   return 1;
 }
 
-static int lualua_openlibs(lua_State *L) {
-  lualua_State *S = lualua_checkstate(L, 1);
-  luaL_openlibs(S->state);
-  return 0;
-}
-
 typedef struct {
   lua_State *state;
   int nargs;
@@ -422,6 +416,38 @@ static int lualua_docpcall(lua_State *L, lua_State *S, int nargs,
                            int nresults) {
   lualua_Call call = {S, nargs, nresults};
   return lua_cpcall(L, lualua_docall, &call);
+}
+
+static int lualua_libpcall(lua_State *SS) {
+  lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
+  lua_getfield(SS, -1, "host");
+  lua_State *L = lua_touserdata(SS, -1);
+  lua_pop(SS, 1);
+  int nargs = lua_gettop(SS) - 1;
+  lua_State *T = lua_newthread(SS);
+  lua_insert(SS, -nargs - 2);
+  lua_xmove(SS, T, nargs + 1);
+  int result = lualua_docpcall(L, T, nargs, LUA_MULTRET);
+  if (result == 0) {
+    int nr = lua_gettop(T);
+    lua_pushboolean(SS, 1);
+    lua_xmove(T, SS, nr);
+    return nr + 1;
+  } else {
+    lua_pop(SS, 1);
+    lua_pushboolean(SS, 0);
+    lua_pushstring(SS, lua_tostring(L, -1));
+    return 2;
+  }
+}
+
+static int lualua_openlibs(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  luaL_openlibs(S->state);
+  lua_pushcclosure(S->state, lualua_libpcall, 0);
+  lua_setglobal(S->state, "pcall");
+  /* TODO also override xpcall */
+  return 0;
 }
 
 static int lualua_pcall(lua_State *L) {
