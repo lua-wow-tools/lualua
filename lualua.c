@@ -200,12 +200,22 @@ static int lualua_getfenv(lua_State *L) {
   return 0;
 }
 
+static int lualua_dogetfield(lua_State *SS) {
+  const char *k = luaL_checkstring(SS, 2);
+  lua_getfield(SS, 1, k);
+  return 1;
+}
+
 static int lualua_getfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   const char *k = luaL_checkstring(L, 3);
-  lualua_checkoverflow(L, S, 1);
-  lua_getfield(S->state, index, k);
+  lualua_checkoverflow(L, S, 3);
+  lua_pushvalue(S->state, index);
+  lua_pushcfunction(S->state, lualua_dogetfield);
+  lua_insert(S->state, -2);
+  lua_pushstring(S->state, k);
+  lualua_safecall(L, S, 2, 1);
   return 0;
 }
 
