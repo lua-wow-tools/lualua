@@ -244,7 +244,7 @@ static int lualua_dogettable(lua_State *SS) {
 static int lualua_gettable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  lualua_checkoverflow(L, S, 3);
+  lualua_checkoverflow(L, S, 2);
   lua_pushvalue(S->state, index);
   lua_pushcfunction(S->state, lualua_dogettable);
   lua_insert(S->state, -3);
