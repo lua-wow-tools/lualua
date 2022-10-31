@@ -143,11 +143,25 @@ static int lualua_checkstack(lua_State *L) {
   return 1;
 }
 
+static int lualua_doconcat(lua_State *SS) {
+  lua_concat(SS, lua_gettop(SS));
+  return 1;
+}
+
 static int lualua_concat(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int n = luaL_checkint(L, 2);
-  lualua_checkunderflow(L, S, n);
-  lua_concat(S->state, n);
+  if (n >= 0) {
+    lualua_checkunderflow(L, S, n);
+    lualua_checkoverflow(L, S, 1);
+    lua_pushcfunction(S->state, lualua_doconcat);
+    lua_insert(S->state, -n - 1);
+    if (lua_pcall(S->state, n, 1, 0) != 0) {
+      lua_pushstring(L, lua_tostring(S->state, -1));
+      lua_settop(S->state, 0);
+      lua_error(L);
+    }
+  }
   return 0;
 }
 
