@@ -654,11 +654,27 @@ static int lualua_setfenv(lua_State *L) {
   return 1;
 }
 
+static int lualua_dosetfield(lua_State *SS) {
+  const char *k = luaL_checkstring(SS, 2);
+  lua_setfield(SS, 1, k);
+  return 0;
+}
+
 static int lualua_setfield(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   const char *k = luaL_checkstring(L, 3);
-  lua_setfield(S->state, index, k);
+  lualua_checkunderflow(L, S, 1);
+  /* TODO do this in more places */
+  if (!lua_checkstack(S->state, 4)) {
+    luaL_error(L, "stack overflow");
+  }
+  lua_pushcfunction(S->state, lualua_dosetfield);
+  lua_pushvalue(S->state, index);
+  lua_pushstring(S->state, k);
+  lua_pushvalue(S->state, -4);
+  lualua_safecall(L, S, 3, 0);
+  lua_pop(S->state, 1);
   return 0;
 }
 
