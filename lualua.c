@@ -119,16 +119,21 @@ static int lualua_state_gc(lua_State *L) {
   return 0;
 }
 
-static int lualua_call(lua_State *L) {
-  lualua_State *S = lualua_checkstate(L, 1);
-  int nargs = luaL_checkint(L, 2);
-  int nresults = luaL_checkint(L, 3);
-  lualua_checkunderflow(L, S, nargs + 1);
+static void lualua_safecall(lua_State *L, lualua_State *S, int nargs,
+                            int nresults) {
   if (lua_pcall(S->state, nargs, nresults, 0) != 0) {
     lua_pushstring(L, lua_tostring(S->state, -1));
     lua_settop(S->state, 0);
     lua_error(L);
   }
+}
+
+static int lualua_call(lua_State *L) {
+  lualua_State *S = lualua_checkstate(L, 1);
+  int nargs = luaL_checkint(L, 2);
+  int nresults = luaL_checkint(L, 3);
+  lualua_checkunderflow(L, S, nargs + 1);
+  lualua_safecall(L, S, nargs, nresults);
   return 0;
 }
 
@@ -156,11 +161,7 @@ static int lualua_concat(lua_State *L) {
     lualua_checkoverflow(L, S, 1);
     lua_pushcfunction(S->state, lualua_doconcat);
     lua_insert(S->state, -n - 1);
-    if (lua_pcall(S->state, n, 1, 0) != 0) {
-      lua_pushstring(L, lua_tostring(S->state, -1));
-      lua_settop(S->state, 0);
-      lua_error(L);
-    }
+    lualua_safecall(L, S, n, 1);
   }
   return 0;
 }
