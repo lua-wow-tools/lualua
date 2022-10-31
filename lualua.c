@@ -19,15 +19,6 @@ static const char lualua_sandbox_refname[] =
 static const char lualua_state_metatable[] = "lualua state";
 static const char lualua_gctoken_metatable[] = "lualua gctoken";
 
-static int lualua_atpanic(lua_State *SS) {
-  lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
-  lua_getfield(SS, -1, "host");
-  lua_State *L = lua_touserdata(SS, -1);
-  lua_pushstring(L, lua_tostring(SS, -3));
-  lua_settop(SS, 0);
-  return lua_error(L);
-}
-
 static int lualua_gctoken_gc(lua_State *SS) {
   int ref = *(int *)lua_touserdata(SS, 1);
   lua_getfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
@@ -62,7 +53,6 @@ static int lualua_newstate(lua_State *L) {
   lua_settable(SS, -3);
   lua_setfield(SS, -2, "gctokenmt");
   lua_setfield(SS, LUA_REGISTRYINDEX, lualua_sandbox_refname);
-  lua_atpanic(SS, lualua_atpanic);
   p->state = SS;
   p->stackmax = LUA_MINSTACK;
   p->stateowner = 1;
