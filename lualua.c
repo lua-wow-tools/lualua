@@ -452,24 +452,6 @@ static int lualua_openlibs(lua_State *L) {
   return 0;
 }
 
-typedef struct {
-  lua_State *state;
-  int nargs;
-  int nresults;
-} lualua_Call;
-
-static int lualua_docall(lua_State *L) {
-  lualua_Call *call = lua_touserdata(L, 1);
-  lua_call(call->state, call->nargs, call->nresults);
-  return 0;
-}
-
-static int lualua_docpcall(lua_State *L, lua_State *S, int nargs,
-                           int nresults) {
-  lualua_Call call = {S, nargs, nresults};
-  return lua_cpcall(L, lualua_docall, &call);
-}
-
 static int lualua_pcall(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int nargs = luaL_checkint(L, 2);
@@ -477,38 +459,11 @@ static int lualua_pcall(lua_State *L) {
   int errfunc = luaL_checkint(L, 4);
   if (errfunc != 0) {
     lualua_assert(L, S, lualua_isacceptableindex(S, errfunc), "invalid index");
-    errfunc = errfunc >= 0 ? errfunc : lua_gettop(S->state) + errfunc + 1;
+    errfunc = lualua_absoluteindex(S, errfunc);
   }
   lualua_checkunderflow(L, S, nargs + 1);
   lualua_checkoverflow(L, S, 1);
-  lua_State *T = lua_newthread(S->state);
-  lua_insert(S->state, -nargs - 2);
-  lua_xmove(S->state, T, nargs + 1);
-  int result = lualua_docpcall(L, T, nargs, nresults);
-  if (result == 0) {
-    int nr = lua_gettop(T);
-    lua_xmove(T, S->state, nr);
-    lua_remove(S->state, -nr - 1);
-  } else if (errfunc == 0) {
-    lua_pop(S->state, 1);
-    lua_pushstring(S->state, lua_tostring(L, -1));
-  } else if (lua_type(S->state, errfunc) != LUA_TFUNCTION) {
-    lua_pop(S->state, 1);
-    lua_pushstring(S->state, "errfunc error");
-    result = LUA_ERRERR;
-  } else {
-    lua_pushvalue(S->state, errfunc);
-    lua_xmove(S->state, T, 1);
-    lua_pushstring(T, lua_tostring(L, -1));
-    if (lualua_docpcall(L, T, 1, 1) != 0) {
-      lua_pop(S->state, 1);
-      lua_pushstring(S->state, "errfunc error");
-      result = LUA_ERRERR;
-    } else {
-      lua_xmove(T, S->state, 1);
-      lua_remove(S->state, -2);
-    }
-  }
+  int result = lua_pcall(S->state, nargs, nresults, errfunc);
   lua_pushinteger(L, result);
   return 1;
 }
