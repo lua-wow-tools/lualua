@@ -696,11 +696,21 @@ static int lualua_setmetatable(lua_State *L) {
   return 1;
 }
 
+static int lualua_dosettable(lua_State *SS) {
+  lua_settable(SS, 1);
+  return 0;
+}
+
 static int lualua_settable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
   lualua_checkunderflow(L, S, 2);
-  lua_settable(S->state, index);
+  lualua_checkoverflow(L, S, 2);
+  lua_pushvalue(S->state, index);
+  lua_insert(S->state, -3);
+  lua_pushcfunction(S->state, lualua_dosettable);
+  lua_insert(S->state, -4);
+  lualua_safecall(L, S, 3, 0);
   return 0;
 }
 
