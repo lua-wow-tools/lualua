@@ -1,6 +1,7 @@
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
+#include <string.h>
 
 #ifdef ELUNE_VERSION
 #define LUALUA_IS_ELUNE
@@ -142,10 +143,44 @@ static int lualua_call(lua_State *L) {
   return 0;
 }
 
+static int lualua_argerror(lua_State *L, lualua_State *S, int narg,
+                           const char *extramsg) {
+  lua_Debug ar;
+  if (!lua_getstack(S->state, 0, &ar)) { /* no stack frame? */
+    return luaL_error(L, "bad argument #%d (%s)", narg, extramsg);
+  }
+  lua_getinfo(S->state, "n", &ar);
+  if (strcmp(ar.namewhat, "method") == 0) {
+    narg--;          /* do not count `self' */
+    if (narg == 0) { /* error is in the self argument itself? */
+      return luaL_error(L, "calling '%s' on bad self (%s)", ar.name, extramsg);
+    }
+  }
+  if (ar.name == NULL) {
+    ar.name = "?";
+  }
+  return luaL_error(L, "bad argument #%d to '%s' (%s)", narg, ar.name,
+                    extramsg);
+}
+
+static int lualua_typerror(lua_State *L, lualua_State *S, int narg,
+                           const char *tname) {
+  const char *msg = lua_pushfstring(L, "%s expected, got %s", tname,
+                                    luaL_typename(S->state, narg));
+  return lualua_argerror(L, S, narg, msg);
+}
+
+static int lualua_tagerror(lua_State *L, lualua_State *S, int narg, int tag) {
+  return lualua_typerror(L, S, narg, lua_typename(S->state, tag));
+}
+
 static int lualua_checknumber(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  lua_Number value = luaL_checknumber(S->state, index);
+  lua_Number value = lua_tonumber(S->state, index);
+  if (value == 0 && !lua_isnumber(S->state, index)) {
+    return lualua_tagerror(L, S, index, LUA_TNUMBER);
+  }
   lua_pushnumber(L, value);
   return 1;
 }
@@ -164,7 +199,10 @@ static int lualua_checkstack(lua_State *L) {
 static int lualua_checkstring(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  const char *value = luaL_checkstring(S->state, index);
+  const char *value = lua_tostring(S->state, index);
+  if (!value) {
+    return lualua_tagerror(L, S, index, LUA_TSTRING);
+  }
   lua_pushstring(L, value);
   return 1;
 }
