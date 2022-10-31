@@ -236,10 +236,20 @@ static int lualua_getmetatable(lua_State *L) {
   return 1;
 }
 
+static int lualua_dogettable(lua_State *SS) {
+  lua_gettable(SS, -2);
+  return 1;
+}
+
 static int lualua_gettable(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index = lualua_checkacceptableindex(L, 2, S);
-  lua_gettable(S->state, index);
+  lualua_checkoverflow(L, S, 3);
+  lua_pushvalue(S->state, index);
+  lua_pushcfunction(S->state, lualua_dogettable);
+  lua_insert(S->state, -3);
+  lua_insert(S->state, -2);
+  lualua_safecall(L, S, 2, 1);
   return 0;
 }
 
