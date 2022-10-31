@@ -124,7 +124,11 @@ static int lualua_call(lua_State *L) {
   int nargs = luaL_checkint(L, 2);
   int nresults = luaL_checkint(L, 3);
   lualua_checkunderflow(L, S, nargs + 1);
-  lua_call(S->state, nargs, nresults);
+  if (lua_pcall(S->state, nargs, nresults, 0) != 0) {
+    lua_pushstring(L, lua_tostring(S->state, -1));
+    lua_settop(S->state, 0);
+    lua_error(L);
+  }
   return 0;
 }
 
