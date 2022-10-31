@@ -34,7 +34,7 @@ repos:
     language: system
   - id: make-test
     name: make test
-    entry: bash -c "make test || true"
+    entry: make test
     language: system
     pass_filenames: false
 - repo: meta
