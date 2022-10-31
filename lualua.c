@@ -88,18 +88,23 @@ static void lualua_assert(lua_State *L, lualua_State *S, int cond,
   }
 }
 
+static int lualua_absoluteindex(lualua_State *S, int index) {
+  int top = lua_gettop(S->state);
+  return (index < 0 && -index <= top) ? (top + index + 1) : index;
+}
+
 static int lualua_checkacceptableindex(lua_State *L, int index,
                                        lualua_State *S) {
   int k = luaL_checkint(L, index);
   lualua_assert(L, S, lualua_isacceptableindex(S, k), "invalid index");
-  return k;
+  return lualua_absoluteindex(S, k);
 }
 
 static int lualua_checkacceptablestackindex(lua_State *L, int index,
                                             lualua_State *S) {
   int k = luaL_checkint(L, index);
   lualua_assert(L, S, lualua_isacceptablestackindex(S, k), "invalid index");
-  return k;
+  return lualua_absoluteindex(S, k);
 }
 
 static void lualua_checkoverflow(lua_State *L, lualua_State *S, int space) {
