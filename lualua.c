@@ -186,7 +186,9 @@ static int lualua_equal(lua_State *L) {
 static int lualua_error(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   lualua_checkunderflow(L, S, 1);
-  return lua_error(S->state);
+  lua_pushstring(L, lua_tostring(S->state, -1));
+  lua_settop(S->state, 0);
+  return lua_error(L);
 }
 
 static int lualua_getfenv(lua_State *L) {
