@@ -367,12 +367,21 @@ static int lualua_isuserdata(lua_State *L) {
   return 1;
 }
 
+static int lualua_dolessthan(lua_State *SS) {
+  lua_pushboolean(SS, lua_lessthan(SS, -2, -1));
+  return 1;
+}
+
 static int lualua_lessthan(lua_State *L) {
   lualua_State *S = lualua_checkstate(L, 1);
   int index1 = lualua_checkacceptableindex(L, 2, S);
   int index2 = lualua_checkacceptableindex(L, 3, S);
-  int value = lua_lessthan(S->state, index1, index2);
-  lua_pushboolean(L, value);
+  lualua_checkoverflow(L, S, 3);
+  lua_pushcfunction(S->state, lualua_dolessthan);
+  lua_pushvalue(S->state, index1);
+  lua_pushvalue(S->state, index2);
+  lualua_safecall(L, S, 2, 1);
+  lua_pushboolean(L, lua_toboolean(S->state, -1));
   return 1;
 }
 
