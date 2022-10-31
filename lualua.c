@@ -459,7 +459,6 @@ static int lualua_pcall(lua_State *L) {
   int errfunc = luaL_checkint(L, 4);
   if (errfunc != 0) {
     lualua_assert(L, S, lualua_isacceptableindex(S, errfunc), "invalid index");
-    errfunc = lualua_absoluteindex(S, errfunc);
   }
   lualua_checkunderflow(L, S, nargs + 1);
   lualua_checkoverflow(L, S, 1);
