@@ -16,5 +16,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && /opt/lua-5.1.5/bin/luarocks install busted \
     && /opt/lua-5.1.5/bin/luarocks install luacheck \
     && hererocks --elune @12a94e702e0e2d3af99cd6065252055d20bbe5f9 -r 3.8.0 /opt/elune \
-    && /opt/elune/bin/luarocks install busted
+    && /opt/elune/bin/luarocks install busted \
+    && hererocks -j 2.1.0-beta3 -r 3.8.0 /opt/luajit-2.1.0-beta3 \
+    && /opt/luajit-2.1.0-beta3/bin/luarocks install busted
 COPY --from=stylua-builder /opt/stylua /usr/local

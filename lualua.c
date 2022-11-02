@@ -899,15 +899,6 @@ typedef struct {
   int value;
 } lualua_Constant;
 
-/*
- * MAXSTACK exists in PUC Lua llimits.h but is not exposed in the public API.
- * Elune exposes the value as LUAI_MAXSTACK.
- * We default to the default value in PUC Lua and hope it's not overridden.
- */
-#ifndef LUAI_MAXSTACK
-#define LUAI_MAXSTACK 250
-#endif
-
 static const lualua_Constant lualua_constants[] = {
     {"ENVIRONINDEX", LUA_ENVIRONINDEX},
     {"ERRERR", LUA_ERRERR},
@@ -916,7 +907,7 @@ static const lualua_Constant lualua_constants[] = {
     {"ERRSYNTAX", LUA_ERRSYNTAX},
     {"GLOBALSINDEX", LUA_GLOBALSINDEX},
     {"MAXCSTACK", LUAI_MAXCSTACK},
-    {"MAXSTACK", LUAI_MAXSTACK},
+    {"MAXSTACK", 250}, /* LUAI_MAXSTACK, sometimes. */
     {"MINSTACK", LUA_MINSTACK},
     {"MULTRET", LUA_MULTRET},
     {"REGISTRYINDEX", LUA_REGISTRYINDEX},
