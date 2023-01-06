@@ -1062,6 +1062,13 @@ describe('lualua', function()
         s:loadstring('moocow()')
         assert.errors(docall(s, 0, 0), 'womp womp')
       end)
+      it('does not preserve reference equality', function()
+        local s = lib.newstate()
+        local f = function() end
+        s:pushcfunction(f)
+        s:pushcfunction(f)
+        assert.same(false, s:equal(-2, -1))
+      end)
     end)
 
     describe('pushnil', function()
